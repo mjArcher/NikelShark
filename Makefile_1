@@ -1,0 +1,64 @@
+#Matt Archer. Makefile for Solid solved with riemann method v0.1 Feb 2014
+#   2 # Can use $(shell ...) which expands to the output of the argument(s))
+CUDA:=
+CXX=g++
+CPPFLAGS= -O3 -g -fopenmp -Wall -std=c++0x #- $(shell root-config --cflags)
+LDFLAGS=-g #$(shell root-config --ldflags)
+LDLIBS=-I ~/Libraries/eigen/ -I ~/Libraries/eigen-dev/unsupported/ -I ~/Libraries/ -I ~/Libraries/libconfig/lib/ -lconfig++
+RM=rm -f
+# LDLIBS=-I ~/Libraries/eigen/ -I ~/Libraries/ -lconfig++ 
+
+SRCS=Elastic1D.cpp ElasticState.cpp ElasticPrimState.cpp SolidSystem.cpp ElasticEOS.cpp Utils.cpp
+OBJS=$(subst .cpp,.o,$(SRCS))#substitutes all .cpp in SRCS variable with .o (objects)
+LDADD=#~/Libraries/lib/libconfig++.la
+LIBTOOL=~/Libraries/libconfig/libtool
+CXXLINK=$(CXX)# $(LIBTOOL)
+
+Elastic1D: $(OBJS) $(LDADD)
+	$(CXXLINK) $(CPPFLAGS) $(LDFLAGS) -o Elastic1D $(OBJS) $(LDLIBS) $(LDADD)
+
+Elastic1D.o: Elastic1D.cpp ElasticState.h ElasticPrimState.h SolidSystem.h ElasticEOS.h Utils.h
+	$(CXX) $(CPPFLAGS) -c Elastic1D.cpp -o Elastic1D.o $(LDLIBS)
+
+ElasticState.o: ElasticState.h ElasticState.cpp
+	$(CXX) $(CPPFLAGS) -c ElasticState.cpp -o ElasticState.o $(LDLIBS)
+
+ElasticPrimState.o: ElasticPrimState.h ElasticPrimState.cpp
+	$(CXX) $(CPPFLAGS) -c ElasticPrimState.cpp -o ElasticPrimState.o $(LDLIBS)
+
+SolidSystem.o: SolidSystem.h SolidSystem.cpp ElasticPrimState.h ElasticState.h ElasticEOS.h Utils.h
+	$(CXX) $(CPPFLAGS) -c SolidSystem.cpp -o SolidSystem.o $(LDLIBS)
+
+ElasticEOS.o: ElasticEOS.h ElasticEOS.cpp
+	$(CXX) $(CPPFLAGS) -c ElasticEOS.cpp -o ElasticEOS.o $(LDLIBS)
+
+Utils.o: Utils.cpp Utils.h
+	$(CXX) $(CPPFLAGS) -c Utils.cpp -o Utils.o $(LDLIBS)
+
+clean:
+	$(RM) $(OBJS)
+
+dist-clean: clean
+	$(RM) tool
+# Sort.o: Sort.cpp Sort.h
+#     g++ $(CPPFLAGS) -c Sort.cpp
+
+
+all: tool
+
+tool: $(OBJS)
+	g++ $(LDFLAGS) -o tool $(OBJS) $(LDLIBS) 
+
+depend: .depend
+
+.depend: $(SRCS)
+	rm -f ./.depend
+	$(CXX) $(CPPFLAGS) -MM $^>>./.depend;
+
+clean:
+	$(RM) $(OBJS)
+
+dist-clean: clean
+	$(RM) *~ .dependtool
+
+include .depend
