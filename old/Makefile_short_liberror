@@ -1,0 +1,34 @@
+#Matt Archer. Makefile for Solid solved with riemann method v0.2 Feb 2016
+#   2 # Can use $(shell ...) which expands to the output of the argument(s))
+CUDA:=
+CXX=g++
+CPPFLAGS=-O3 -g -fopenmp -Wall -std=c++0x #- $(shell root-config --cflags)
+LDFLAGS= #$(shell root-config --ldflags)
+RM=rm -f
+LDLIBS=-I ~/install/Libraries/eigen/ -I ~/install/Libraries/eigen-dev/unsupported/ -I ~/Libraries/ -I ~/Libraries/libconfig/lib/ -lconfig++ -leigen
+# LDLIBS=-I ~/Libraries/eigen/ -I ~/Libraries/ -lconfig++ 
+
+SRCS=Elastic1D.cpp ElasticState.cpp ElasticPrimState.cpp SolidSystem.cpp ElasticEOS.cpp Utils.cpp
+OBJS=$(subst .cpp,.o,$(SRCS))#substitutes all .cpp in SRCS variable with .o (objects)
+LDADD=$(LDLIBS)
+# LDADD=#~/Libraries/lib/libconfig++.la
+LIBTOOL=~/install/Libraries/libconfig/libtool
+CXXLINK=$(CXX)# $(LIBTOOL)
+
+all: Elastic1D
+
+Elastic1D: $(OBJS) $(LDADD)
+	$(CXXLINK) $(CPPFLAGS) $(LDFLAGS) -o Elastic1D $(OBJS) $(LDLIBS) $(LDADD)
+
+depend: .depend
+
+.depend: $(SRCS)
+	rm -f ./.depend
+	$(CXX) $(CPPFLAGS) -MM $^>>./.depend;
+
+clean:
+	$(RM) $(OBJS)
+
+dist-clean: clean
+	$(RM) *~ .dependtool
+

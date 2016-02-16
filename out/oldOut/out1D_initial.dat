@@ -1,0 +1,401 @@
+ 	density	u_1	u_2	u_3	sigma_11	sigma_12	sigma_13	sigma_22	sigma_23	sigma_33	I1	I2	I3	dI_1	dI_2	dI_3
+0-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+5e-05-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0001-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00015-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0002-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00025-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0003-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00035-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0004-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00045-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0005-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00055-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0006-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00065-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0007-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00075-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0008-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00085-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0009-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00095-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.001-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00105-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0011-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00115-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0012-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00125-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0013-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00135-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0014-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00145-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0015-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00155-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0016-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00165-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0017-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00175-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0018-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00185-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0019-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00195-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.002-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00205-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0021-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00215-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0022-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00225-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0023-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00235-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0024-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00245-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0025-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00255-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0026-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00265-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0027-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00275-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0028-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00285-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0029-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00295-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.003-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00305-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0031-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00315-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0032-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00325-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0033-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00335-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0034-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00345-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0035-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00355-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0036-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00365-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0037-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00375-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0038-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00385-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0039-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00395-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.004-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00405-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0041-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00415-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0042-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00425-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0043-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00435-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0044-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00445-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0045-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00455-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0046-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00465-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0047-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00475-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0048-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00485-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0049-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00495-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.005-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00505-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0051-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00515-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0052-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00525-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0053-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00535-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0054-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00545-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0055-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00555-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0056-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00565-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0057-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00575-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0058-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00585-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0059-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00595-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.006-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00605-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0061-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00615-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0062-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00625-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0063-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00635-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0064-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00645-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0065-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00655-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0066-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00665-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0067-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00675-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0068-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00685-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0069-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00695-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.007-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00705-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0071-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00715-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0072-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00725-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0073-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00735-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0074-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00745-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0075-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00755-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0076-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00765-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0077-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00775-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0078-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00785-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0079-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00795-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.008-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00805-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0081-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00815-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0082-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00825-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0083-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00835-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0084-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00845-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0085-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00855-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0086-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00865-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0087-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00875-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0088-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00885-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0089-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00895-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.009-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00905-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0091-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00915-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0092-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00925-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0093-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00935-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0094-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00945-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0095-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00955-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0096-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00965-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0097-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00975-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0098-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00985-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.0099-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+
+0.00995-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	-nan	
+

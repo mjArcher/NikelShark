@@ -1,5 +1,20 @@
-5/05/14
-reformatted slic code, ready to start on riemann solution
+16/01/16
+========
+added libconfig module
 
+TODO:
+=====
+create a .gnuplotrc file
+MPI functionality (remove openMP)
+generalise solvers (WAF, MUSCL, SLIC etc)
+
+level-sets
+  --signed distance function generation
+  --arbitrary shapes
+  --boundary conditions: slip/stick/weld
+
+05/05/14
+========
+reformatted slic code, ready to start on riemann solution
 switched to branch riemannTwo
 

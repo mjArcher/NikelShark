@@ -1,0 +1,12 @@
+#Matt Archer: Revised Makefile for solid code 16/02/16
+CXX=g++
+CPPFLAGS= -g -fopenmp -Wall -std=c++0x #- $(shell root-config --cflags)
+LDLIBS=-I ~/install/Libraries/ -I ~/install/Libraries/eigen/ -I ~/install/Libraries/eigen-dev/unsupported/ -I ~/install/Libraries/ -I ~/install/Libraries/libconfig/lib/ -lconfig++
+SRCS=ElasticState.cpp ElasticPrimState.cpp SolidSystem.cpp ElasticEOS.cpp Utils.cpp SquareTensor3.cpp
+OBJS=$(subst .cpp,.o,$(SRCS))#substitutes all .cpp in SRCS variable with .o (objects)
+
+Elastic1D: Elastic1D.o $(OBJS) $(LDADD)
+	rm -f Elastic1D
+	$(CXXLINK) $(CPPFLAGS) $(LDFLAGS) -o Elastic1D Elastic1D.o $(OBJS) $(LDLIBS) $(LDADD)
+
+
