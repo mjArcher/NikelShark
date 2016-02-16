@@ -66,7 +66,6 @@ std::ostream& operator<<(std::ostream& os, const ElasticState& param)
 	os << "\t          [ " << setw(9) << rhoFe(2,0) << "  " << setw(9) << rhoFe(2,1) << "  " << setw(9) << rhoFe(2,2) << " ]\n";
 
 
-
 	/* os.precision(3); */
 	/* for (int i = 0; i < ElasticState::e_size; i++) */
 	/* { */

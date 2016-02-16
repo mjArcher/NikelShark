@@ -1,4 +1,3 @@
-
 #include <libconfig.h++>
 #include <iomanip>
 #include <cstdlib>
@@ -12,7 +11,7 @@ using namespace libconfig;
 using namespace Eigen;
 
 
-#define debug_
+/* #define debug_ */
 
 /* int e_size = -27; */
 
@@ -563,14 +562,18 @@ int main(int argc, char ** argv)
 {
 	string outFile, outInitFile;
 	int Ni;
-	if(argc != 5){
+	if(argc != 3){
 		cout << "Insufficient Parameters: exit" << endl;
 		cout << "Number of parameters " << argc << endl;
 		exit(1);
 	}
 	else {
 		const string icStr = string(argv[1]);
-		cout << "Solve Test " << icStr << endl;
+    stringstream convert(argv[2]);
+    if (!(convert >> Ni)){ cout << "input positive integer number of cells"; exit(0); }
+    else
+      convert >> Ni;
+
 		if(icStr == "barton1") 
 		{
 			icType = Barton1;
@@ -594,6 +597,9 @@ int main(int argc, char ** argv)
 
 	cout << " Solve barton test with " << Ni << " cells " << " and output to " << outInitFile << " and " << outFile << endl;
 	Domain dom;
+
+  outInitFile = "Output/test.dat";
+  outFile = "Output/testInit.dat";
 
 	string matStr;
 	
@@ -719,6 +725,7 @@ int main(int argc, char ** argv)
 						setw(15) << " Remaining " << setw(6) <<tf-t<< endl;
 		/* break; */
 	}
+
 	outputGnu(outFile, *mat, outStep);
 #ifdef debug_
 	printArray(*mat);
