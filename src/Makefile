@@ -2,9 +2,9 @@
 #   2 # Can use $(shell ...) which expands to the output of the argument(s))
 CUDA:=
 CXX=g++
-CPPFLAGS= -g -fopenmp -Wall -std=c++0x #- $(shell root-config --cflags)
+CPPFLAGS=-fopenmp -pedantic -O3 -g -Wall -std=c++0x #- $(shell root-config --cflags)
 LDFLAGS=-g #$(shell root-config --ldflags)
-LDLIBS=-I ~/install/Libraries/ -I ~/install/Libraries/eigen/ -I ~/install/Libraries/eigen-dev/unsupported/ -I ~/install/Libraries/ -I ~/install/Libraries/libconfig/lib/ -lconfig++
+LDLIBS=-I ~/lib/ -I ~/lib/eigen/ -I ~/lib/eigen-dev/unsupported/ -I ~/lib/ -I ~/lib/libconfig/lib/ -lconfig++
 RM=rm -f
 # LDLIBS=-I ~/Libraries/eigen/ -I ~/Libraries/ -lconfig++ 
 
@@ -22,7 +22,7 @@ EOSUnitTests: EOSUnitTests.o $(OBJS) $(LDADD)
 	rm -f EOSUnitTests
 	$(CXXLINK) $(CPPFLAGS) $(LDFLAGS) -o EOSUnitTests EOSUnitTests.o $(OBJS) $(LDLIBS) $(LDADD)
 
-Elastic1D.o: Elastic1D.cpp ElasticState.h ElasticPrimState.h SolidSystem.h ElasticEOS.h Utils.h SquareTensor3.h 
+Elastic1D.o: Elastic1D.cpp InputSolid.h ElasticState.h ElasticPrimState.h SolidSystem.h ElasticEOS.h Utils.h SquareTensor3.h 
 	$(CXX) $(CPPFLAGS) -c Elastic1D.cpp -o Elastic1D.o $(LDLIBS)
 
 EOSUnitTests.o: EOSUnitTests.cpp ElasticState.h ElasticPrimState.h SolidSystem.h ElasticEOS.h SquareTensor3.h

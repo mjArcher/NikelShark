@@ -1,17 +1,25 @@
-#include <config4cpp/Configuration.h>
+/* #include <config4cpp/Configuration.h> */
 #include <iostream>
-using namespace config4cpp;
+#include <Eigen/Dense>
+#include <Eigen/Core>
+#include <libconfig.h++>
+
+using namespace libconfig;
+/* using namespace config4cpp; */
+using namespace Eigen;
 using namespace std;
 
 void getState(Vector3d &u, Matrix3d &F, double &rho, double& S, Setting&);
 
 //originally in main
-string getDirName(const string& prefix, const Domain& dom) 
-{
-  stringstream filenameSS;
-  filenameSS << "out/" << prefix << "_" << dom.Ni << "/";
-  return filenameSS.str();
-}    
+/* string getDirName(const string& prefix, const Domain& dom) */ 
+/* { */
+/*   stringstream filenameSS; */
+/*   filenameSS << "out/" << prefix << "_" << dom.Ni << "/"; */
+/*   return filenameSS.str(); */
+/* } */    
+
+
 
 
 int readFromFile()
@@ -22,7 +30,8 @@ int readFromFile()
 	double S_t, rho_t, e_t;
 	try
 	{
-		cfg.readFile("./Configurations/testCases.cfg");
+		/* cfg.readFile("/lsc/zeushome/ma595/Code/computing/solid/solid-1D/input/barton1D.cfg"); */
+		cfg.readFile("./barton1D.cfg");
 	}
 	catch(const FileIOException &fioex)
 	{
@@ -37,22 +46,44 @@ int readFromFile()
 	}
 	try
 	{
+    std::cout << "Reading from configuration file" << std::endl;
+    /* int slLimChoice; */
 		/* cfg.lookupValue("slChoice", slLimChoice); */
-		/* cfg.lookupValue("base", baseDir); */
+    /* std::cout << "slChoice " << slLimChoice << std::endl; */
+    /* cfg.lookupValue("base", baseDir); */
+    // can either use lookup here or index it as shown below 
+		Setting &settingState = cfg.lookup("simulation.riemannstate.left");
+    Setting& root = cfg.getRoot();
+    Setting& simulation = root["simulation"];
+		/* cout << "Length " << settingState.getLength() << endl; */
+		/* int temp = settingState["rho"].getLength(); */
+    int max = 3;
+    int count = 3;
+    Matrix3d F;
+    for (unsigned int i = 0; i < max; i++)
+    {
+      for (unsigned int j = 0; j < max; j++)
+      {
+        count = i*max + j;
+        F(i,j) = simulation["riemannstate"]["left"]["F"][count];
+        std::cout << F(i,j) << std::endl;
+      }
+    }
 
-		Setting &settingState = cfg.lookup("rstates.left");
-		cout << "Length " << settingState.getLength() << endl;
-    cout << "Material " << settingState
-		int temp = settingState["rho"].getLength();
+		/* /1* /2* //get leftstate *2/ *1/ */
+		/* getState(u_t, F_t, rho_t, S_t, settingState); */
+  
 
-		//get leftstate
-		getState(u_t, F_t, rho_t, S_t, settingState);
-		e_t = internalEnergy(F_t, S_t);	
-		ElasticState ElasticStateL(u_t, F_t, rho_t, S_t, e_t);
-		cout << ElasticStateL << endl;	
-		settingState.lookupValue("rho", rho_t);
-		cout << rho_t << endl;
-		cout << "slChoice" <<slLimChoice << endl;
+
+
+		/* /1* /2* e_t = internalEnergy(F_t, S_t); *2/ *1/ */	
+    /* /1* double e_t = 1; *1/ */
+		/* /1* /2* ElasticState ElasticStateL(u_t, F_t, rho_t, S_t, e_t); *2/ *1/ */
+		/* /1* /2* cout << ElasticStateL << endl; *2/ *1/ */	
+		/* /1* settingState.lookupValue("slLimChoice", rho_t); *1/ */
+		/* /1* cout << rho_t << endl; *1/ */
+
+		/* cout << "slChoice" <<slLimChoice << endl; */
 	}
 	catch(const SettingNotFoundException &nfex)
 	{
@@ -70,6 +101,7 @@ void getState(Vector3d &u, Matrix3d &F, double &rho, double& S, Setting& setting
 	for (unsigned int i = 0; i < max; i++)
 	{
 		u(i) = setting["u"][i];
+    std::cout << u(i) << std::endl;
 	}
 	int count = 0;
 	for (unsigned int i = 0; i < max; i++)
@@ -78,6 +110,7 @@ void getState(Vector3d &u, Matrix3d &F, double &rho, double& S, Setting& setting
 		{
 			count = i*max + j;
 			F(i,j) = setting["F"][count];
+      std::cout << F(i,j) << std::endl;
 		}
 	}
 }
@@ -85,5 +118,6 @@ void getState(Vector3d &u, Matrix3d &F, double &rho, double& S, Setting& setting
 int main(int argc, char ** argv)
 {
   std::cout << "Hello world" << std::endl;
+  readFromFile();
 }
 

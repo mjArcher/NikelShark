@@ -176,7 +176,7 @@ class Input{
 
       yMin = simulation["domain"]["dimensions"]["y"][0];
       yMax = simulation["domain"]["dimensions"]["y"][1];
-      
+
       zMin = simulation["domain"]["dimensions"]["z"][0];
       zMax = simulation["domain"]["dimensions"]["z"][1];
 
@@ -185,102 +185,102 @@ class Input{
       deltaZ = (zMax - zMin)/cellCountZ;
 
       if(simulation.exists("device")){
-	device = simulation["device"];
+        device = simulation["device"];
       }
 
       if(simulation.exists("space")){
-	Setting& space = simulation["space"];
-	if(std::string(space.c_str()) == "cartesian"){
-	  cartesian = true;
-	}
-	if(std::string(space.c_str()) == "curvilinear"){
-	  curvilinear = true;
-	  cartesian = false;
-	}
-	if(std::string(space.c_str()) == "cut-cell"){
-	  cut_cell = true;
-	  cartesian = false;
-	}
+        Setting& space = simulation["space"];
+        if(std::string(space.c_str()) == "cartesian"){
+          cartesian = true;
+        }
+        if(std::string(space.c_str()) == "curvilinear"){
+          curvilinear = true;
+          cartesian = false;
+        }
+        if(std::string(space.c_str()) == "cut-cell"){
+          cut_cell = true;
+          cartesian = false;
+        }
       }
 
 
       if(simulation.exists("time")){
-	time = true;
-	end_time = simulation["time"]["end"];
+        time = true;
+        end_time = simulation["time"]["end"];
       }
 
       if(simulation.exists("toro")){
-	toro = true;
-	test = simulation["toro"]["test"];
-	angle = simulation["toro"]["angle"];
+        toro = true;
+        test = simulation["toro"]["test"];
+        angle = simulation["toro"]["angle"];
       }
 
       if(simulation.exists("shock")){
-	shock = true;
-	mach = simulation["shock"]["mach"];
-	rho_ahead = simulation["shock"]["rho_ahead"];	
-	u_ahead = simulation["shock"]["u_ahead"];	
-	v_ahead = simulation["shock"]["v_ahead"];	
-	p_ahead = simulation["shock"]["p_ahead"];	
-	shockDiaph_x = simulation["shock"]["diaph"]["x"];	
-	shockDiaph_y = simulation["shock"]["diaph"]["y"];	
-	shockNorm_x = simulation["shock"]["norm"]["x"];	
-	shockNorm_y = simulation["shock"]["norm"]["y"];	
-	angle = simulation["shock"]["angle"];
+        shock = true;
+        mach = simulation["shock"]["mach"];
+        rho_ahead = simulation["shock"]["rho_ahead"];	
+        u_ahead = simulation["shock"]["u_ahead"];	
+        v_ahead = simulation["shock"]["v_ahead"];	
+        p_ahead = simulation["shock"]["p_ahead"];	
+        shockDiaph_x = simulation["shock"]["diaph"]["x"];	
+        shockDiaph_y = simulation["shock"]["diaph"]["y"];	
+        shockNorm_x = simulation["shock"]["norm"]["x"];	
+        shockNorm_y = simulation["shock"]["norm"]["y"];	
+        angle = simulation["shock"]["angle"];
       }
 
       if(simulation.exists("wedge")){
-	wedge = true;
-	wedgeStart = simulation["wedge"]["start"];	
-	wedgeEnd = simulation["wedge"]["end"];	
-	wedgeAngle = simulation["wedge"]["angle"];	
+        wedge = true;
+        wedgeStart = simulation["wedge"]["start"];	
+        wedgeEnd = simulation["wedge"]["end"];	
+        wedgeAngle = simulation["wedge"]["angle"];	
       }
 
       if(simulation.exists("bubble")){
-	bubble = true;
-	bubble_rho = simulation["bubble"]["rho"];	
-	bubble_u = simulation["bubble"]["u"];	
-	bubble_v = simulation["bubble"]["v"];	
-	bubble_p = simulation["bubble"]["p"];	
-	bubble_x = simulation["bubble"]["centre"]["x"];
-	bubble_y = simulation["bubble"]["centre"]["y"];
-	radius = simulation["bubble"]["radius"];	
+        bubble = true;
+        bubble_rho = simulation["bubble"]["rho"];	
+        bubble_u = simulation["bubble"]["u"];	
+        bubble_v = simulation["bubble"]["v"];	
+        bubble_p = simulation["bubble"]["p"];	
+        bubble_x = simulation["bubble"]["centre"]["x"];
+        bubble_y = simulation["bubble"]["centre"]["y"];
+        radius = simulation["bubble"]["radius"];	
       }
 
       if(simulation.exists("ambient")){
-	ambient = true;
-	ambient_rho = simulation["ambient"]["rho"];	
-	ambient_u = simulation["ambient"]["u"];	
-	ambient_v = simulation["ambient"]["v"];	
-	ambient_p = simulation["ambient"]["p"];	
+        ambient = true;
+        ambient_rho = simulation["ambient"]["rho"];	
+        ambient_u = simulation["ambient"]["u"];	
+        ambient_v = simulation["ambient"]["v"];	
+        ambient_p = simulation["ambient"]["p"];	
       }
 
       if(simulation.exists("output")){
-	Setting& output = simulation["output"];
-	filePath = output["directory"].c_str();
-	fileName = output["name"].c_str();
-	frequency = output["frequency"];
-	start_output = output["start_output"];
-	end_output = output["end_output"];
+        Setting& output = simulation["output"];
+        filePath = output["directory"].c_str();
+        fileName = output["name"].c_str();
+        frequency = output["frequency"];
+        start_output = output["start_output"];
+        end_output = output["end_output"];
       }
-      
+
       if(simulation.exists("method")){
-	Setting& method = simulation["method"];
-	if(std::string(method.c_str()) == "TVDWAF"){
-	  TVDWAF = true;
-	  MUSCL = false;
-	}
-	if(std::string(method.c_str()) == "MUSCL"){
-	  MUSCL = true;
-	  TVDWAF = false;
-	}
+        Setting& method = simulation["method"];
+        if(std::string(method.c_str()) == "TVDWAF"){
+          TVDWAF = true;
+          MUSCL = false;
+        }
+        if(std::string(method.c_str()) == "MUSCL"){
+          MUSCL = true;
+          TVDWAF = false;
+        }
       }
 
       if(cut_cell){
-	if(simulation.exists("geometry")){
-	  Setting& geometry = simulation["geometry"];
-	  geometryPath = geometry["directory"].c_str();
-	}
+        if(simulation.exists("geometry")){
+          Setting& geometry = simulation["geometry"];
+          geometryPath = geometry["directory"].c_str();
+        }
       }
 
     }

@@ -1,6 +1,21 @@
-16/01/16
+19/03/16
 ========
-added libconfig module
+getting the correct-ish results but is slow
+profile and compare against kevin's code. (disable openmp) - kcachegrind (done this recently)
+
+
+
+
+18/03/16
+========
+1D ghost-fluid
+x/t diagrams
+compare speeds to group code
+solver class
+levelsets 
+implement godunov state solution  
+2D curl boundary condition
+Templated tensor class
 
 TODO:
 =====
@@ -9,6 +24,7 @@ MPI functionality (remove openMP)
 generalise solvers (WAF, MUSCL, SLIC etc)
 
 level-sets
+  --1D method 
   --signed distance function generation
   --arbitrary shapes
   --boundary conditions: slip/stick/weld

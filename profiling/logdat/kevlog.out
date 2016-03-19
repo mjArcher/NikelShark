@@ -1,0 +1,12 @@
+==27884== Callgrind, a call-graph generating cache profiler
+==27884== Copyright (C) 2002-2013, and GNU GPL'd, by Josef Weidendorfer et al.
+==27884== Using Valgrind-3.10.1 and LibVEX; rerun with -h for copyright info
+==27884== Command: /home/raid/ma595/solid-1D/kevinref/Elastic1DUnigrid barton1 100
+==27884== Parent PID: 27739
+==27884== 
+==27884== For interactive control, run 'callgrind_control -h'.
+==27884== 
+==27884== Events    : Ir
+==27884== Collected : 3172464392
+==27884== 
+==27884== I   refs:      3,172,464,392
