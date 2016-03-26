@@ -102,7 +102,6 @@ void solveXGodunov()
 	//3. construct left and right eigen vectors
 	//4. Solve linear system by multiplying by one of these eigenvectors to get coefficients
 	//5. Reconstruct primitive state
-	//6. Hey Presto
 }
 
 ElasticState forceFlux(System& sys, vector<ElasticState>& left, vector<ElasticState>& right, double dt_dX, int i)
@@ -116,7 +115,7 @@ ElasticState forceFlux(System& sys, vector<ElasticState>& left, vector<ElasticSt
 
 void solveXForce(Material& mat, const double dt)
 {
-
+       
 }
 
 void solveX(Material& mat, const double dt)
@@ -153,7 +152,7 @@ void solveX(Material& mat, const double dt)
   #pragma omp parallel for schedule(dynamic)
 	for(int i = mat.dom.starti - 1; i < mat.dom.endi + 1; i++)
 	{
-		mat.sol[i] += dt_dX*(forceFlux(sys, left, right, dt_dX, i - 1) - forceFlux(sys, left, right, dt_dX, i));
+	  mat.sol[i] += dt_dX*(forceFlux(sys, left, right, dt_dX, i - 1) - forceFlux(sys, left, right, dt_dX, i));
 	}
 	//printArray(U);
 	BCs(mat);
@@ -205,10 +204,10 @@ double getMinDt(const Material& mat)
 	//! Convert to primitive 
 
   double sharedmindt = std::numeric_limits<double>::max(); 
-/* #pragma omp parallel */
+#pragma omp parallel
   {
     double mindt = std::numeric_limits<double>::max();
-/* #pragma omp for nowait schedule(dynamic) */
+#pragma omp for nowait schedule(dynamic)
     for (int i = mat.dom.starti; i < mat.dom.endi; i++) 
     {
       /* ElasticPrimState prim = mat.sys.conservativeToPrimitive(mat.sol[i]); */
@@ -234,7 +233,7 @@ double getMinDt(const Material& mat)
       }		 
       else { cout << "density is zero or negative: exit" << endl; exit(1);	}
     }	
-/* #pragma omp critical */
+#pragma omp critical
     {
       sharedmindt = std::min(sharedmindt, mindt);
     }

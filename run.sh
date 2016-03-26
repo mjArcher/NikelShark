@@ -1,6 +1,6 @@
 #! /bin/bash
 #
-CELLREF=1000
+CELLREF=100
 LIMITER=min-bee
 # kevin-1D (reference solution 1)
 ~/solid-1D/kevinref/Elastic1DUnigrid barton2 $CELLREF
