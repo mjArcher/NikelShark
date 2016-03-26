@@ -73,8 +73,7 @@ double ElasticEOS::internalEnergy(Vector3d I, double S) const
 	/* cout << I[2] << " cv "; */
 	/* cout << "Here 3 " << endl; */
 
-	U = (K0/(2.*alpha*alpha))*pow((pow(I(2),alpha/2.))-1,2.)+
-		cv*T0*pow(I(2),gamma/2.)*(exp(S/cv)-1.);
+	U = (K0/(2.*alpha*alpha))*pow((pow(I(2),alpha/2.))-1,2.)+ cv*T0*pow(I(2),gamma/2.)*(exp(S/cv)-1.);
 	W = (B0/2.)*pow(I(2),beta/2.)*(pow(I(0),2)/3. - I(1));
 
 	/* cout << S << " " << alpha << " " << beta << " " << gamma << " " << cv << " " << B0 << " " << T0 << " " << K0 << endl; */
@@ -98,7 +97,7 @@ double ElasticEOS::entropy(Vector3d I, double internalEnergy) const
 	double I_3b = pow(I[2], beta/2.);
 	double I_3g = pow(I[2], gamma/2.);
 
-	double term1 = (K0/pow(alpha,2)/2.)*pow((I_3a-1),2);
+	double term1 = 0.5*(K0/pow(alpha,2))*pow((I_3a-1.),2.);
 	double term2 = (B0/2.)*I_3b*(pow(I[0], 2)/3. - I[1]);
 	double term3 = cv*T0*I_3g;
 

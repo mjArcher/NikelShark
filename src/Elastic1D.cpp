@@ -15,13 +15,15 @@ using namespace std;
 using namespace libconfig;
 using namespace Eigen;
 
+/* #define debug_ */
+
 //use kevin's domain and Material structs as a base to modify later
 //work by solving over each material in turn
 //(How does 1D ghost fluid work?)
 //two or more separate domains which we solve then repopulate 'solution vector'
 //system, dom and EOS associated with each material
 
-enum slope_lim{superbee, minbee, van_leer, albalda};//0,1,2,3
+enum slope_lim{superbee, minbee, vanleer, albalda};//0,1,2,3
 slope_lim sl;
 
 struct Domain {
@@ -105,10 +107,16 @@ void solveXGodunov()
 
 ElasticState forceFlux(System& sys, vector<ElasticState>& left, vector<ElasticState>& right, double dt_dX, int i)
 {
-	const ElasticState F_lf = 0.5*(sys.flux(right[i]) + sys.flux(left[i+1])) + 0.5*(1./dt_dX)*(right[i]-left[i+1]);
+	const ElasticState F_lf = 0.5*(sys.flux(right[i]) + sys.flux(left[i+1])) + (0.5/dt_dX)*(right[i]-left[i+1]);
 	const ElasticState C_r = 0.5*(right[i] + left[i+1]) + 0.5*(dt_dX)*(sys.flux(right[i]) - sys.flux(left[i+1]));
 	ElasticState F_force = 0.5*(F_lf + sys.flux(C_r));
 	return F_force;
+}
+
+
+void solveXForce(Material& mat, const double dt)
+{
+
 }
 
 void solveX(Material& mat, const double dt)
@@ -116,15 +124,12 @@ void solveX(Material& mat, const double dt)
 	int cells = mat.dom.GNi;
 	vector<ElasticState> left(cells);
 	vector<ElasticState> right(cells);
-	//primitive state vector
-	/* vector<ElasticPrimState> prim(cells); */
-
 	const double dt_dX = dt/mat.dom.dx;
 
   #pragma omp parallel for schedule(dynamic)
 	for(int i = mat.dom.starti - 1; i < mat.dom.endi + 1; ++i) 
 	{
-		//2. calculate left and right extrapolated values (bar) pg 514 and slope pg 506.
+		//extrapolated values (bar) pg 514 and slope pg 506.
 		const ElasticState slopebar = grad(mat, i);
 		ElasticState Cleft = mat.sol[i] - 0.5 * slopebar;
 		ElasticState Cright = mat.sol[i] + 0.5 * slopebar;
@@ -135,18 +140,21 @@ void solveX(Material& mat, const double dt)
 	}		
 	
 	left[0] = mat.sol[0];
-	right[0] = mat.sol[0];//is required
+	right[0] = mat.sol[0]; //is required
+	left[1] = mat.sol[1];
+	right[1] = mat.sol[1]; //is required
 	left[cells - 1] = mat.sol[cells - 1];
 	right[cells - 1] = mat.sol[cells - 1];	
+	left[cells - 2] = mat.sol[cells - 2];
+	right[cells - 2] = mat.sol[cells - 2];	
 
-	System system = mat.sys;	
+	System sys = mat.sys;	
 	//3. calculate force flux using LF and RI, and calculate new cell averaged Ui pg 494
   #pragma omp parallel for schedule(dynamic)
 	for(int i = mat.dom.starti - 1; i < mat.dom.endi + 1; i++)
 	{
-		mat.sol[i] += dt_dX*(forceFlux(system, left, right, dt_dX, i - 1) - forceFlux(system, left, right, dt_dX, i));
+		mat.sol[i] += dt_dX*(forceFlux(sys, left, right, dt_dX, i - 1) - forceFlux(sys, left, right, dt_dX, i));
 	}
-
 	//printArray(U);
 	BCs(mat);
 }
@@ -162,7 +170,7 @@ ElasticState grad(const Material& mat, int i)
 	ElasticState delta = 0.5*(1+w)*num;// + 0.5*(1-w)*denom;
 	//aNew = Ui[i].soundSpeed();	
 	//cout << i << endl;	
-	for(int j = 0; j < 3; j++)
+	for(int j = 0; j < ElasticState::e_size; j++)
 	{	
 		if(num[j] == 0 && den[j] == 0)
 		{
@@ -183,6 +191,7 @@ ElasticState grad(const Material& mat, int i)
 		const double ksi = slopelim(r[j]);
 		//ksi = 1;
 		delta[j] *= ksi; 	 
+    
 	}
 	return delta; 
 } 
@@ -196,10 +205,10 @@ double getMinDt(const Material& mat)
 	//! Convert to primitive 
 
   double sharedmindt = std::numeric_limits<double>::max(); 
-#pragma omp parallel
+/* #pragma omp parallel */
   {
     double mindt = std::numeric_limits<double>::max();
-#pragma omp for nowait schedule(dynamic)
+/* #pragma omp for nowait schedule(dynamic) */
     for (int i = mat.dom.starti; i < mat.dom.endi; i++) 
     {
       /* ElasticPrimState prim = mat.sys.conservativeToPrimitive(mat.sol[i]); */
@@ -214,7 +223,7 @@ double getMinDt(const Material& mat)
 
       u_1 = fabs(primVel);
       /* double rho = mat.sys.Density(prim); */
-
+      
 
       if(rho > 0) {
         if((a + u_1) > Smax)
@@ -225,7 +234,7 @@ double getMinDt(const Material& mat)
       }		 
       else { cout << "density is zero or negative: exit" << endl; exit(1);	}
     }	
-#pragma omp critical
+/* #pragma omp critical */
     {
       sharedmindt = std::min(sharedmindt, mindt);
     }
@@ -269,7 +278,7 @@ double slopelim(double r)
 	//calculate ksi_r
 	double ksi_sl = 0;
 	//slope limiters:
-	//cout << "Slope limiter " << slLimChoice << endl;
+  /* cout << "Slope limiter " << sl << endl; */ 
 	switch(sl)
 	{		
 		case superbee:
@@ -282,7 +291,7 @@ double slopelim(double r)
 			else if (r >= 1)
 				ksi_sl = min(r, min(ksi_r(r), 2.));
 			break;
-		case van_leer:		
+		case vanleer:		
 			if(r <= 0)
 				ksi_sl = 0;
 			else
@@ -312,8 +321,8 @@ double ksi_r(double r)
 	/* double cNew = aNew*dt/dX; */
 	//cout << "courant Number	" << cNew << endl;
 	//return 2./(1. + r);
-	double beta_fw = 1;//2/(0.1);
-	double w = 1;
+	double beta_fw = 1.;//2/(0.1);
+	double w = 1.;
 	return 2.*beta_fw/(1. - w + (1. + w)*r);
 }
 
@@ -330,9 +339,9 @@ void outputGnu(string file, Material mat, int outStep, double t)
     output << "# t = 0 " << '\n'
       << "# Column 1: x-coordinate" << '\n'
       << "# Column 2: density" << '\n'
-      << "# Column 3: u_1" << '\n'
-      << "# Column 4: u_2" << '\n'
-      << "# Column 5: u_3" << '\n'
+      << "# Column 3: U" << '\n'
+      << "# Column 4: V" << '\n'
+      << "# Column 5: W" << '\n'
       << "# Column 6: sigma_11" << '\n'
       << "# Column 7: sigma_12" << '\n'
       << "# Column 8: sigma_13" << '\n'
@@ -348,7 +357,16 @@ void outputGnu(string file, Material mat, int outStep, double t)
       << "# Column 18: I3" << '\n'
       << "# Column 19: dI_1" << '\n'
       << "# Column 20: dI_2" << '\n'
-      << "# Column 21: dI_3" << '\n' << endl;
+      << "# Column 21: dI_3" << '\n' 
+	    << "# Column 22: G11" << '\n'  
+	    << "# Column 22: G12" << '\n'  
+	    << "# Column 22: G13" << '\n'  
+	    << "# Column 22: G21" << '\n'  
+	    << "# Column 22: G22" << '\n'  
+	    << "# Column 22: G23" << '\n'  
+	    << "# Column 22: G31" << '\n'  
+	    << "# Column 22: G32" << '\n'  
+	    << "# Column 22: G33" << '\n' << endl;
     output.close();
   }
   //some work needs doing here
@@ -366,11 +384,13 @@ void outputGnu(string file, Material mat, int outStep, double t)
 		Vector3d u = primState.u_();
 		Vector3d inv = mat.sys.getInvariants(primState.F_());
 		Matrix3d sigma = mat.sys.stress(primState);
-
+  	const Matrix3d G = mat.sys.strainTensor(primState.F_());
     // convert cell into 
     // phys domain is mat.dom.Lx/cell 
     // (i-2)*dx + dx/2
     // dx*((i-mat.dom.starti) + 0.5)
+    //get invariants
+    
     
 		output << (double)mat.dom.dx*((i-mat.dom.starti)+0.5) << '\t'
 			<< rho/1e3 << '\t' 
@@ -389,7 +409,17 @@ void outputGnu(string file, Material mat, int outStep, double t)
 			<< entropy/1e6 << '\t'
 			<< inv[0] << '\t'
 			<< inv[1] << '\t'
-			<< inv[2] << '\t' << endl;
+			<< inv[2] << '\t' 
+      << G(0,0) << '\t'
+      << G(0,1) << '\t'
+      << G(0,2) << '\t'
+      << G(1,0) << '\t'
+      << G(1,1) << '\t'
+      << G(1,2) << '\t'
+      << G(2,0) << '\t'
+      << G(2,1) << '\t'
+      << G(2,2) << '\t'
+      << endl;
 
 		/* for(unsigned int j = 0; j < out.size(); j++) */
 		/* { */
@@ -414,7 +444,7 @@ int solveSystem(InputSolid inputSolid, Material* mat){
   
   double t(0), dt(0), tend(inputSolid.end_time);
   const double CFL(inputSolid.input_CFL);
-  // initialize domain 
+  //output names 
   double outFreq(tend/inputSolid.frequency);
 	int step(0), outStep(0); 
   std::string outDir(inputSolid.filePath), outName(inputSolid.fileName);
@@ -429,7 +459,7 @@ int solveSystem(InputSolid inputSolid, Material* mat){
 		BCs(*mat);
 		//1. calculate time step: CFL and boundary conditions pg 495
 		dt = getMinDt(*mat);
-		/* if(step < 10)	{dt /= 10;} */
+		/* if(step < 20)	{dt /= 10;} */
 		dt *= CFL;
 
 
@@ -457,7 +487,14 @@ int solveSystem(InputSolid inputSolid, Material* mat){
 						setw(15) << " Remaining " << setw(6) <<tend-t<< endl;
 
     advance(*mat, dt);
+
 		t += dt;
+    /* if(step == 1) */
+    /* { */
+    /*   outputGnu(outFile, *mat, outStep, t); */
+    /*   break; */
+    /* } */
+
 		++step;
 	}
 
@@ -468,6 +505,92 @@ int solveSystem(InputSolid inputSolid, Material* mat){
 	printArray(*mat);
 #endif
   return 0;
+}
+
+void unitTests(Material mat, ElasticPrimState iPrimL, ElasticPrimState iPrimR)
+{
+	cout << "perform simple solution array tests " << endl;
+	/* printArray(mat); */
+
+#ifdef debug_
+	cout.precision(6);
+
+	mat.sys.Eos.checkEosConstants();
+
+	cout << "Prim stateL" << endl;
+	cout << iPrimL << endl;
+	cout << "Density" << mat.sys.Density(iPrimL) << endl;
+	cout << "Strain tensor L " << mat.sys.strainTensor(iPrimL.F_()) << endl;
+	cout << "INVARIANTS L " << endl;
+	cout << mat.sys.getInvariants(iPrimL.F_()) << endl;	
+
+	cout << "Prim stateR" << endl;
+	cout << iPrimR << endl;
+	cout << "Density" << mat.sys.Density(iPrimR) << endl;
+	cout << "Strain tensor L " << mat.sys.strainTensor(iPrimR.F_()) << endl;
+	cout << "INVARIANTS R " << endl;
+	cout << mat.sys.getInvariants(iPrimR.F_()) << endl;	
+
+	ElasticState iStateL = mat.sys.primitiveToConservative(iPrimL);
+	ElasticState iStateR = mat.sys.primitiveToConservative(iPrimR);
+
+	cout <<"Cons stateL" << endl;
+	cout << iStateL << endl;
+	cout << "Density" << mat.sys.Density(iStateL) << endl;
+	cout << endl;
+
+	cout <<"Cons stateR" << endl;
+	cout << iStateR << endl;
+	cout << "Density" << mat.sys.Density(iStateR) << endl;
+	cout << endl;
+
+	ElasticPrimState iPrimL2 = mat.sys.conservativeToPrimitive(iStateL);
+	ElasticPrimState iPrimR2 = mat.sys.conservativeToPrimitive(iStateR);
+
+	cout << "Prim stateL" << endl;
+	cout << iPrimL2 << endl;
+	cout << "Density" << mat.sys.Density(iPrimL2) << endl;
+ 	cout << endl;
+	cout << "INVARIANTS L " << endl;
+	cout << mat.sys.getInvariants(iPrimL.F_()) << endl;	
+
+	cout << "Prim stateR" << endl;
+	cout << iPrimR2 << endl;
+	cout << "Density" << mat.sys.Density(iPrimR2) << endl;
+	cout << endl;
+	cout << "INVARIANTS R " << endl;
+	cout << mat.sys.getInvariants(iPrimR.F_()) << endl;	
+
+//---------------------
+	cout << "Check EOS constants" << endl;
+	mat.sys.Eos.checkEosConstants();
+#endif
+}
+
+void getLimiter(InputSolid inputSolid)
+{
+  std::string limStr = inputSolid.limiter;
+  if(limStr == "superbee") 
+  {
+    sl = superbee;
+  }
+  else if(limStr == "minbee") 
+  {
+    sl = minbee;
+  }
+  else if(limStr == "vanleer")
+  {
+    sl = vanleer;
+  }
+  else if(limStr == "albalda")
+  {
+    sl = albalda;
+  }
+  else 
+  {
+    cerr << "Unknown limiter \'" << sl << "\' - options are superbee, minbee, vanleer, albalda\n";
+    exit(1);
+  }
 }
 
 int main(int argc, char ** argv)
@@ -481,8 +604,8 @@ int main(int argc, char ** argv)
   InputSolid inputSolid;
   inputSolid.readConfigFile(icStr);
 
-  //initialize
-	Domain dom = Domain(inputSolid.cellCountX, 2, 0.01); 
+  //create and initialize domain
+	Domain dom = Domain(inputSolid.cellCountX, 2, inputSolid.xMax); 
   ElasticEOS Eos(inputSolid.matL);
   Material* mat = new Material(inputSolid.matL, dom, Eos);
 
@@ -492,13 +615,19 @@ int main(int argc, char ** argv)
   double iface = inputSolid.iface;
   ICInterface(*mat, iface, primStateL, primStateR);
 
-  //solvesystem
-  clock_t begin = clock();
-  solveSystem(inputSolid, mat);
-  clock_t end = clock();
-  double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-  std::cout << "TIME " << elapsed_secs << std::endl;
+  //get limiter
+  getLimiter(inputSolid);
 
+  #ifdef debug_
+  unitTests(*mat, primStateL, primStateR);
+  exit(1);
+  #endif
+  //solvesystem
+  double begin = omp_get_wtime();
+  solveSystem(inputSolid, mat);
+  double end = omp_get_wtime();
+  double elapsed_secs = double(end - begin);
+  std::cout << "TIME " << elapsed_secs << std::endl;
   delete mat;
 }
 

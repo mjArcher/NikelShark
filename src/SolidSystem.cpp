@@ -6,7 +6,7 @@ using namespace std;
 
 System::System(const ElasticEOS eos):Eos(eos){}
 
-System::~System(){};
+System::~System(){}
 
 //solid problem worth addressing for efficiency purposes is that when convert from 
 
@@ -58,6 +58,7 @@ double System::Density(const ElasticState& consState) const
 Matrix3d System::strainTensor(const Matrix3d& F) const
 {
 	Matrix3d G = (F.inverse().transpose())*(F.inverse());	
+	/* Matrix3d G = F.inverse()*(F.inverse().transpose()); */	
 	return G;
 }
 
@@ -71,9 +72,6 @@ Vector3d System::getInvariants(const Matrix3d& F) const
 	I[2] = G.determinant();
 	return I;
 }
-//invariants fine here 
-
-//possible efficiency issues here?
 
 ElasticState System::flux(const ElasticState& consState) const
 {
@@ -103,7 +101,7 @@ ElasticState System::flux(const ElasticState& consState, const ElasticPrimState&
 	Fl[9]  = rhoF(2,0)*u(0) - rhoF(0,0)*u(2);
 	Fl[10] = rhoF(2,1)*u(0) - rhoF(0,1)*u(2);
 	Fl[11] = rhoF(2,2)*u(0) - rhoF(0,2)*u(2);
-	Fl[12] = rhoE*u(0) - u(0)*sigma(0,0)-u(1)*sigma(0,1)-u(1)*sigma(0,2);
+	Fl[12] = rhoE*u(0) - u(0)*sigma(0,0)-u(1)*sigma(0,1)-u(2)*sigma(0,2);
 	return Fl;
 
 	/* Fl[0]  = v[0]*u[0] - sigma(0,0); */
@@ -139,9 +137,7 @@ Matrix3d System::stress(const ElasticPrimState& primState) const
 	double sigma_t;
 	double term1 = 0., term2 = 0., term3 = 0.;
 	Matrix3d sigma;
-
 	//this needs to be reimplemented to take advantage of library matrix multiplication
-
 	for(int i = 0; i < 3; i++)
 		for(int j = 0; j < 3; j++)
 		{	

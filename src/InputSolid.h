@@ -60,6 +60,8 @@ class InputSolid{
     std::string fileName;
     std::string geometryPath;
 
+    std::string limiter;
+
     InputSolid(){
       time = false;
       test = 0;
@@ -93,6 +95,8 @@ class InputSolid{
       SR = 0;
 
       iface = 0;
+
+      limiter = "vanleer";
     }
 
     int readConfigFile(const char* filepath){
@@ -240,7 +244,11 @@ class InputSolid{
         input_CFL = simulation["CFL"];
        }
 
+       if(simulation.exists("Limiter"))
+        limiter = simulation["Limiter"].c_str();
+
         std::cout << "input_CFL " << input_CFL << std::endl;
+        std::cout << "limiter " << limiter << std::endl;
 
         /* /1* /2* //get leftstate *2/ *1/ */
         /* getState(u_t, F_t, rho_t, S_t, settingState); */
