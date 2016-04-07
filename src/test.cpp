@@ -14,6 +14,9 @@ int main(int argc, char ** argv){
 	const ElasticState eA;
 	const ElasticState eB;
 	const ElasticState test0 = eA + eB;
+  
+  std::vector<ElasticState> solnVector;
+  
 
 
 }

@@ -58,6 +58,9 @@ double slopelim(double);
 double ksi_r(double);
 ElasticState grad(const Material&, int);
 
+//ppm functions
+ElasticState theta(const Material& mat, int j);
+
 void BCs(Material& mat) {  
 /* i boundaries */
 #pragma omp parallel for schedule(dynamic)
@@ -115,14 +118,179 @@ ElasticState forceFlux(System& sys, vector<ElasticState>& left, vector<ElasticSt
 
 void solveXForce(Material& mat, const double dt)
 {
-       
+   
 }
+ 
+//need following functions:
+//ppm
+//--Q (Quadratic reconstruction)
+//--P (new reconstruction
+//--theta
+//--minmod
+//SolveXPPM
+//flux
+//step
+//w
+//
+//
+//
+//timestepping 
+
+// leave this until I understand more fully rk3 timestepping
+//
+/* double rk3(l, q, dt) */
+/*   q1 =   q            +   dt*l(q) */
+/*   q2 = 3*q/4 +   q1/4 +   dt*l(q1)/4 */
+/*   q3 =   q/3 + 2*q2/3 + 2*dt*l(q2)/3 */
+/*   return q3 */
+/* end */
+
+template <typename T> int sgn(T val) {
+  return (T(0) < val) - (val < T(0));
+}
+
+template <typename T> double minmod(T a, T b)
+{
+  return (sgn(a) - sgn(b))*min(abs(a), abs(b))/2.;
+}
+
+//we don't need k here, all that's necessary is to use the state that we created 
+/* double L(k,j,x) */ 
+//If I was more intelligent, I could do this vectorwise instead of componentwise
+
+/* for(int j = 0; j < ElasticState::e_size; j++) */
+
+//do it component wise first:
+//limiter 
+//i is the integer we use to index the state
+/* double theta(Material& mat, const int i) */
+/* { */
+  
+/* } */
+
+/* //reconstruction */
+/* ElasticState P(Material) */
+/* { */
+
+/* } */
+
+/* double L(int k, int j,) */  
+/* { */
+  
+/* } */
+
+/* //k is the state index */
+/* //j is the solution index */
+// this can eventually be extended to be vectorised
+//
+// if using pointers, would have to dereference all the time
+// we can potentially speed all this up
+
+double Q(const Material& mat, int k, int j, double x)
+{
+  vector<ElasticState> q = mat.sol;
+  double dx = mat.dom.dx/2.;
+  double dd = (q[j+1][k] - 2.*q[j][k] + q[j-1][k])/pow(dx,2.);
+  double d2 = (q[j+1][k] - q[j-1][k])/(2.*dx);
+  return q[j][k] - pow(dx,2.)*dd/24. + d2*x + dd*pow(x,2.)/2.; //this x can be +/- dx/2
+}
+
+double L(const Material& mat, int k, int j, double x)
+{
+  vector<ElasticState> q = mat.sol;
+  const double dx = mat.dom.dx;
+  return q[j][k] + x*minmod((q[j][k] - q[j-1][k])/dx, (q[j+1][k] - q[j][k])/dx);
+}
+
+ElasticState P(const Material& mat, int j, double x)
+{
+  ElasticState th = theta(mat, j);
+  ElasticState qn;
+  for(unsigned int k = 0; k < ElasticState::e_size; k++)
+  {
+    qn[k] = (1.0 - th[k])*L(mat,k,j,x) + th[k]*Q(mat,k,j,x);
+  }
+  return qn; 
+}
+
+// could eventually turn this function into something that is more lengthy 
+ElasticState theta(const Material& mat, int j)
+{
+  double Qr, Ql, Lr, Lj;
+  vector<ElasticState> q = mat.sol;
+  double xl = -mat.dom.dx/2.;
+  double xr = mat.dom.dx/2.;
+
+  ElasticState theta;
+
+  for(int k = 0; k < ElasticState::e_size; k++)
+  {
+    if(q[j-1][k] < q[j][k] && q[j][k] < q[j+1][k]) //a < b && b < c
+    {
+      double Qkjr = Q(mat,k,j,xr); double Lkjr = L(mat,k,j,xr);
+      double Qkjl = Q(mat,k,j,xl); double Lkjl = L(mat,k,j,xl);
+
+      double b1 = max(Qkjr, Qkjl) - Lkjr;
+      if(b1 == 0.0)
+        theta[k] = 1.0;
+      double b2 = max(Qkjr, Qkjl) - Lkjl;
+      if(b2 == 0.0)
+        theta[k] = 1.0;
+      double t1 = max((L(mat,k,j,xl) + L(mat,k,j+1,xl))/2., Q(mat,k,j+1,xl)) - Lkjr;
+      double t2 = max((L(mat,k,j,xr) + L(mat,k,j-1,xr))/2., Q(mat,k,j-1,xr)) - Lkjl;
+
+      theta[k] = min(t1/b1,min(t2/b2,1.0));
+    }
+    else if(q[j-1][k] > q[j][k] && q[j][k] > q[j+1][k])
+    {
+      double Qkjr = Q(mat,k,j,xr); double Lkjr = L(mat,k,j,xr);
+      double Qkjl = Q(mat,k,j,xl); double Lkjl = L(mat,k,j,xl);
+
+      double b1 = max(Qkjr, Qkjl) - Lkjl;
+      if(b1 == 0.0)
+        theta[k] = 1.0;
+      double b2 = max(Qkjr, Qkjl) - Lkjr;
+      if(b2 == 0.0)
+        theta[k] = 1.0;
+
+      double t1 = max((L(mat,k,j,xr) + L(mat,k,j-1,xr))/2., Q(mat,k,j-1,xr)) - Lkjl;
+      double t2 = max((L(mat,k,j,xl) + L(mat,k,j+1,xl))/2., Q(mat,k,j+1,xl)) - Lkjr;
+
+      theta[k] = min(t1/b1,min(t2/b2,1.0));
+    }
+    else 
+      theta[k] = 0.0;
+  }
+  return theta;
+}
+
+//In j's code this operates on a vector approach
+ElasticState flux(const Material& mat, const ElasticState& ql, const ElasticState& qr)
+{
+  double a = 5500; // get this from material information
+  return (mat.sys.flux(ql) + mat.sys.flux(qr) + a * (ql - qr))/2.;
+}
+
+void solveXPPM(Material& mat, const double dt) //evolve function
+{
+  double xl = -mat.dom.dx/2.;
+  double xr = mat.dom.dx/2.;
+
+  vector<ElasticState> ql(mat.dom.GNi);
+  vector<ElasticState> qr(mat.dom.GNi);
+
+  for (int i = mat.dom.starti; i < mat.dom.endi; i++) 
+  {
+
+  }
+}
+
 
 void solveX(Material& mat, const double dt)
 {
-	int cells = mat.dom.GNi;
-	vector<ElasticState> left(cells);
-	vector<ElasticState> right(cells);
+	int N = mat.dom.GNi;
+	vector<ElasticState> left(N);
+	vector<ElasticState> right(N);
 	const double dt_dX = dt/mat.dom.dx;
 
   #pragma omp parallel for schedule(dynamic)
@@ -142,10 +310,10 @@ void solveX(Material& mat, const double dt)
 	right[0] = mat.sol[0]; //is required
 	left[1] = mat.sol[1];
 	right[1] = mat.sol[1]; //is required
-	left[cells - 1] = mat.sol[cells - 1];
-	right[cells - 1] = mat.sol[cells - 1];	
-	left[cells - 2] = mat.sol[cells - 2];
-	right[cells - 2] = mat.sol[cells - 2];	
+	left[N - 1] = mat.sol[N - 1];
+	right[N - 1] = mat.sol[N - 1];	
+	left[N - 2] = mat.sol[N - 2];
+	right[N - 2] = mat.sol[N - 2];	
 
 	System sys = mat.sys;	
 	//3. calculate force flux using LF and RI, and calculate new cell averaged Ui pg 494
@@ -430,7 +598,7 @@ void outputGnu(string file, Material mat, int outStep, double t)
 	output.close();	
 }
 
-void advance(Material& mat, const double dt)
+void advance(Material& mat, const double dt) //or evolve?
 {
 // apply curl constraint (2D) // geometric -
 // cylindrical //spherical bcs //plasticity
@@ -595,6 +763,14 @@ void getLimiter(InputSolid inputSolid)
 int main(int argc, char ** argv)
 {
   // Enable floating point error checking
+  std::vector<ElasticState> solnVector;
+  int i = 0;
+  int j = 0;
+  double output = solnVector[i+1][j] - 1.0;
+
+  std::cout << output << std::endl;
+
+  exit(1);
   feenableexcept(FE_INVALID);                                                                                                                                                                                    
   feenableexcept(FE_DIVBYZERO);
 
