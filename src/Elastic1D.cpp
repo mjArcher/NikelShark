@@ -202,6 +202,7 @@ double L(const Material& mat, int k, int j, double x)
   return q[j][k] + x*minmod((q[j][k] - q[j-1][k])/dx, (q[j+1][k] - q[j][k])/dx);
 }
 
+//this is the reconstruction
 ElasticState P(const Material& mat, int j, double x)
 {
   ElasticState th = theta(mat, j);
@@ -216,7 +217,6 @@ ElasticState P(const Material& mat, int j, double x)
 // could eventually turn this function into something that is more lengthy 
 ElasticState theta(const Material& mat, int j)
 {
-  double Qr, Ql, Lr, Lj;
   vector<ElasticState> q = mat.sol;
   double xl = -mat.dom.dx/2.;
   double xr = mat.dom.dx/2.;
@@ -271,20 +271,66 @@ ElasticState flux(const Material& mat, const ElasticState& ql, const ElasticStat
   return (mat.sys.flux(ql) + mat.sys.flux(qr) + a * (ql - qr))/2.;
 }
 
+
+ElasticState rk3(ElasticState dx_dt, ElasticState q, double dt) //dx_dt, state, dt
+{
+  ElasticState q1 =   q               +   dt * dx_dt;
+  ElasticState q2 = 3*q/4. +    q1/4. +   dt * dx_dt/4.;
+  ElasticState q3 =   q/3. +  2*q2/3. + 2*dt * dx_dt/3.;
+  return q3;
+}
+
+//runge kutta time stepping?
 void solveXPPM(Material& mat, const double dt) //evolve function
 {
-  double xl = -mat.dom.dx/2.;
-  double xr = mat.dom.dx/2.;
+  double dx = mat.dom.dx/2.;
+  double xl = -dx/2.;
+  double xr = dx/2.;
 
   vector<ElasticState> ql(mat.dom.GNi);
   vector<ElasticState> qr(mat.dom.GNi);
+  vector<ElasticState> dx_dt(mat.dom.GNi);
 
-  for (int i = mat.dom.starti; i < mat.dom.endi; i++) 
+  //apply boundaries
+
+  //need to get the number of ghost cells correct here.
+  //3:104
+  for (int i = mat.dom.starti-1; i < mat.dom.endi+1; i++) 
   {
-
+    ql[i] = P(mat,i,xl); //left reconstruction
+    qr[i] = P(mat,i,xr); //left reconstruction
   }
+
+  //compute fluxes between cells
+  //4:103 (3 ghost cells either side
+  ElasticState qlr, qml, qmr, qrl;
+  ElasticState fl, fr;
+  
+  for (int i = mat.dom.starti; i < mat.dom.endi; i++)
+  {
+    qlr = qr[i-1];
+    qml = ql[i];
+    qmr = qr[i];
+    qrl = ql[i+1];
+
+    fl = flux(mat, qlr, qml);
+    fr = flux(mat, qmr, qrl);
+
+    dx_dt[i] = (fl - fr)/dx; // rearranged to avoid implementing additional operators // this is the derivative l in J's code.
+  }
+
+  // rk3 time-stepping
+ 
+  for (int i = mat.dom.starti; i < mat.dom.endi; i++)
+  {
+    mat.sol[i] = rk3(dx_dt[i], mat.sol[i], dt); 
+  }
+
+  BCs(mat);
+  
 }
 
+//
 
 void solveX(Material& mat, const double dt)
 {
@@ -502,7 +548,7 @@ void outputGnu(string file, Material mat, int outStep, double t)
 	/* output.precision(3); */
   if(outStep == 0)
   {
-    output.open(file.c_str(), ios::app);
+    output.open(file.c_str(), ios::app); //we append all results to the same file 
     output << "# t = 0 " << '\n'
       << "# Column 1: x-coordinate" << '\n'
       << "# Column 2: density" << '\n'
@@ -618,7 +664,7 @@ int solveSystem(InputSolid inputSolid, Material* mat){
   std::string outFile(outDir + outName);
   //delete existing output
   ofstream myfile;
-  myfile.open(outFile, ios::trunc);
+  myfile.open(outFile, ios::trunc); // this needs to be kept here (or have as an if statement)
   myfile.close();
 
 	while(t < tend)
@@ -640,15 +686,12 @@ int solveSystem(InputSolid inputSolid, Material* mat){
       cerr << "Saved results to output file " << outStep << "\n";
       ++outStep;
     }
-
 		/* if(t > tf) */
 		/* { */				
 		/* 	t -= dt; */
 		/* 	dt = tf - t; */
 		/* 	t += dt; // should equal tf */
 		/* } */
-
-
 		cout.precision(4);
 		cout << " [" << outStep << "] " << setw(6) << step << setw(6) << "Time " << setw(6) << t << " dt " << setw(6) << dt << 
 						setw(15) << " Remaining " << setw(6) <<tend-t<< endl;
@@ -763,14 +806,12 @@ void getLimiter(InputSolid inputSolid)
 int main(int argc, char ** argv)
 {
   // Enable floating point error checking
-  std::vector<ElasticState> solnVector;
-  int i = 0;
-  int j = 0;
-  double output = solnVector[i+1][j] - 1.0;
+  /* std::vector<ElasticState> solnVector; */
+  /* int i = 0; */
+  /* int j = 0; */
+  /* double output = solnVector[i+1][j] - 1.0; */
 
-  std::cout << output << std::endl;
-
-  exit(1);
+  /* std::cout << output << std::endl; */
   feenableexcept(FE_INVALID);                                                                                                                                                                                    
   feenableexcept(FE_DIVBYZERO);
 
@@ -780,7 +821,7 @@ int main(int argc, char ** argv)
   inputSolid.readConfigFile(icStr);
 
   //create and initialize domain
-	Domain dom = Domain(inputSolid.cellCountX, 2, inputSolid.xMax); 
+	Domain dom = Domain(inputSolid.cellCountX, 3, inputSolid.xMax);  //changed to 3 ghost cells for PPM
   ElasticEOS Eos(inputSolid.matL);
   Material* mat = new Material(inputSolid.matL, dom, Eos);
 

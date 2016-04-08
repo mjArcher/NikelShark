@@ -48,7 +48,7 @@ class ElasticState
 
 		friend std::ostream& operator<<(std::ostream&, const ElasticState&);
 
-		static const int e_size = 13;
+		static const unsigned int e_size = 13;
 
 	private:
 		/* Initial states */
