@@ -1,3 +1,29 @@
+08/04/16
+========
+output simply. Get rid of the multiple outputs and index stuff in gnuplot script. Can we pipe stdout to gnuplot?
+output array 
+implement ppm.
+final index of output?
+x/t graphs?
+
+
+
+26/03/16
+========
+bug found in flux
+next:
+
+implement ppm or weno?
+
+extend to 2D
+generalise to fluid solver 
+function pointers?
+inheritance?
+
+1d plasticity (necessary to do this for write up)
+
+tv Travel Man:
+
 
 19/03/16
 ========

@@ -2,7 +2,7 @@
 #   2 # Can use $(shell ...) which expands to the output of the argument(s))
 CUDA:=
 CXX=g++
-CPPFLAGS=-fopenmp -pedantic -O3 -g -Wall -std=c++0x #- $(shell root-config --cflags)
+CPPFLAGS=-fopenmp -pedantic -g -O3 -Wall -std=c++0x #- $(shell root-config --cflags)
 LDFLAGS=-g #$(shell root-config --ldflags)
 LDLIBS=-I ~/lib/ -I ~/lib/eigen/ -I ~/lib/eigen-dev/unsupported/ -I ~/lib/ -I ~/lib/libconfig/lib/ -lconfig++
 RM=rm -f

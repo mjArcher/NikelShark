@@ -16,6 +16,7 @@ using namespace libconfig;
 using namespace Eigen;
 
 /* #define debug_ */
+/* #define debugrun_ */
 
 //use kevin's domain and Material structs as a base to modify later
 //work by solving over each material in turn
@@ -57,18 +58,22 @@ struct Material {
 double slopelim(double);
 double ksi_r(double);
 ElasticState grad(const Material&, int);
+void outputAll(string, const vector<ElasticState>);
 
 //ppm functions
 ElasticState theta(const Material& mat, int j);
 
 void BCs(Material& mat) {  
-/* i boundaries */
+
+//transmissive boundary conditions 
+//start
 #pragma omp parallel for schedule(dynamic)
   for(int i=0; i<mat.dom.starti; ++i) {
     const int imagei = 2*mat.dom.starti-1-i;
     mat.sol[i] = mat.sol[imagei];
   }
 
+//end
 #pragma omp parallel for schedule(dynamic)
   for(int i=mat.dom.endi; i<mat.dom.GNi; ++i) {
     const int imagei = 2*mat.dom.endi-1-i;
@@ -120,7 +125,144 @@ void solveXForce(Material& mat, const double dt)
 {
    
 }
- 
+
+
+double alpha_r(double d_r, double beta_r)
+{
+  double denom = pow(1e-6+beta_r, 2);
+  return d_r/denom;
+}
+
+vector<ElasticState> beta(vector<ElasticState>& soln, int k, int i)
+{
+  //j should never change here
+  // repeatedly calculating at least the denominator?
+  // think this could be vectorised and stored 
+  vector<ElasticState> b(k);
+  for(unsigned int j = 0; j < ElasticState::e_size; j++)
+  {
+    b[0][j] = 13./12.*pow((soln[i][j] -   2*soln[i+1][j] + soln[i+2][j]), 2.) + 1./4.*pow((3.*soln[i][j] - 4.*soln[i+1][j] + soln[i+2][j]), 2);
+    b[1][j] = 13./12.*pow((soln[i-1][j] - 2*soln[i][j]   + soln[i+1][j]), 2.) + 1./4.*pow(( soln[i-1][j] +    soln[i+1][j]), 2);
+    b[2][j] = 13./12.*pow((soln[i-2][j] - 2*soln[i-1][j] + soln[i][j]), 2.)   + 1./4.*pow(( soln[i-2][j] - 4.*soln[i-1][j] + 3*soln[i][j]), 2);
+  }
+  return b;
+}
+
+vector<ElasticState> omega(Material& mat, vector<ElasticState> vr, int soln_ind, bool right)
+{
+  const double d[3] = {3/10, 3/5, 1/10}; // and dbar_r = d_{k-1-r}
+  int k = vr.size();
+  vector<ElasticState> w(k);  // r .. k
+  double d_r;
+  //need to find the smoothness indicators for all r = 0,...,k-1 before looping over all states? This can be vectorised.
+
+  vector<ElasticState> beta_r = beta(mat.sol, w.size(), soln_ind); // store 1, 2 and 3.
+
+  for(unsigned int r = 0; r < vr.size(); r++)
+  {
+    // if statement on right boolean
+    if(right)
+      d_r = d[r];
+    else
+      d_r = d[k-1-r];
+
+    for(unsigned int j = 0; j < ElasticState::e_size; j++)
+    {
+      double alpha_den;
+      double d_s;
+      for (int s = 0; s < k; s++)
+      {
+        if(right)
+          d_s = d[s];
+        else
+          d_s = d[k-1-s];
+
+        alpha_den += alpha_r(d[s], beta_r[s][j]); // right or left?
+        w[r][j] = alpha_r(d_r, beta_r[r][j])/alpha_den;
+      }
+    }
+  }
+  return w;
+}
+
+ElasticState WENO_recon(Material& mat, int i, bool right)
+{
+  const int r = 4, j = 3; // r = -1, 0, 1, 2 :: j = 0, 1, 2, 3
+  const double C[r][j] = {
+    {11/6, -7/6,  1/3} , 
+    { 1/3,  5/6, -1/6} ,
+    {-1/6,  5/6,  1/3} ,
+    { 1/3, -7/6, 11/6} ,
+  };
+  double eps = 1e-6; 
+  ElasticState weno;
+
+  unsigned short int k = 3;
+  vector<ElasticState> vr(k);
+  vector<ElasticState> q = mat.sol;
+
+  unsigned short int Crinc(0);
+  if(right)
+   Crinc = 1; 
+
+  //(2k - 1) order k = 3 :: 5th order 
+  for(unsigned int r = 0; r < k; r++) // r is the row 0 ... k - 1
+  {
+    for(unsigned int j = 0; j < k; j++)
+    {
+      //k different reconstructions of v+-1/2
+      vr[r] = C[r + Crinc][j] * q[i-r+j];
+    }
+  }
+
+  //calculate left and right weights form reconstructions on each variable separately 
+  //need r sets of weights (each applied to individual variables)
+  vector<ElasticState> w = omega(mat, vr, i, right);
+
+  for(unsigned int r = 0; r < k; r++)
+  {
+    for(unsigned int j = 0; j < ElasticState::e_size; j++)
+    {
+      weno += w[r][j]*vr[j];
+    }
+  }
+
+  return weno;
+}
+
+void solveXWENO(Material& mat, const double dt)
+{
+  //From Shu (1998) pg 353 
+  // weno constants C_rj
+  //  k = r + s + 1 = 3, 
+  // j = 0 to j = k - 1
+  //k = 3 order is 5 : 2k - 1 
+  // r has 4 possible values, but we iterate from 0 to 2
+  //for k = 3 
+  double dx = mat.dom.dx; //bug
+  vector<ElasticState> vl(mat.dom.GNi); // left reconstruction v_i-1/2(+) : right side 
+  vector<ElasticState> vr(mat.dom.GNi); // right reconstruction v_i+1/2(-) : left side 
+
+  //assuming boundary conditions already applied.
+  for (int i = mat.dom.starti-1; i < mat.dom.endi+1; i++)
+  {
+    //compute reconstructions
+    vl[i] = WENO_recon(mat, i, true);
+    vr[i] = WENO_recon(mat, i, false);
+  }
+
+  //need to do a similar thing as ppm: (RK timestepping)
+  /* for (int i = mat.dom.starti; i < mat.dom.endi; i++) */
+  /* { */
+  /*   double dt_dx = dt/dx; */
+  /*   ElasticState f_lf = (mat.sys.flux(vl) + mat.sys.flux(vr) + 1./dt_dx * (vl - vr))/2.; */
+  /*   ElasticState v_ri = 0.5*(vl + vr) + 0.5*dt_dx*(mat.sys.flux(vl) - mat.sys.flux(vr)); */
+  /*   return 0.5 * (f_lf + mat.sys.flux(v_ri)); */
+
+  /* } */
+  //compute force flux using WENO reconstructions 
+}
+
 //need following functions:
 //ppm
 //--Q (Quadratic reconstruction)
@@ -130,20 +272,6 @@ void solveXForce(Material& mat, const double dt)
 //SolveXPPM
 //flux
 //step
-//w
-//
-//
-//
-//timestepping 
-
-// leave this until I understand more fully rk3 timestepping
-//
-/* double rk3(l, q, dt) */
-/*   q1 =   q            +   dt*l(q) */
-/*   q2 = 3*q/4 +   q1/4 +   dt*l(q1)/4 */
-/*   q3 =   q/3 + 2*q2/3 + 2*dt*l(q2)/3 */
-/*   return q3 */
-/* end */
 
 template <typename T> int sgn(T val) {
   return (T(0) < val) - (val < T(0));
@@ -189,9 +317,10 @@ template <typename T> double minmod(T a, T b)
 double Q(const Material& mat, int k, int j, double x)
 {
   vector<ElasticState> q = mat.sol;
-  double dx = mat.dom.dx/2.;
-  double dd = (q[j+1][k] - 2.*q[j][k] + q[j-1][k])/pow(dx,2.);
-  double d2 = (q[j+1][k] - q[j-1][k])/(2.*dx);
+  double dx = mat.dom.dx;
+  //partial derivatives:
+  double dd = (q[j+1][k] - 2.*q[j][k] + q[j-1][k])/pow(dx,2.); //second order derivative
+  double d2 = (q[j+1][k] - q[j-1][k])/(2.*dx); //
   return q[j][k] - pow(dx,2.)*dd/24. + d2*x + dd*pow(x,2.)/2.; //this x can be +/- dx/2
 }
 
@@ -223,7 +352,7 @@ ElasticState theta(const Material& mat, int j)
 
   ElasticState theta;
 
-  for(int k = 0; k < ElasticState::e_size; k++)
+  for(unsigned int k = 0; k < ElasticState::e_size; k++)
   {
     if(q[j-1][k] < q[j][k] && q[j][k] < q[j+1][k]) //a < b && b < c
     {
@@ -231,15 +360,20 @@ ElasticState theta(const Material& mat, int j)
       double Qkjl = Q(mat,k,j,xl); double Lkjl = L(mat,k,j,xl);
 
       double b1 = max(Qkjr, Qkjl) - Lkjr;
+
       if(b1 == 0.0)
         theta[k] = 1.0;
+
       double b2 = max(Qkjr, Qkjl) - Lkjl;
+
       if(b2 == 0.0)
         theta[k] = 1.0;
-      double t1 = max((L(mat,k,j,xl) + L(mat,k,j+1,xl))/2., Q(mat,k,j+1,xl)) - Lkjr;
-      double t2 = max((L(mat,k,j,xr) + L(mat,k,j-1,xr))/2., Q(mat,k,j-1,xr)) - Lkjl;
 
-      theta[k] = min(t1/b1,min(t2/b2,1.0));
+      if(b1 != 0 || b2 != 0){
+        double t1 = max((L(mat,k,j,xl) + L(mat,k,j+1,xl))/2., Q(mat,k,j+1,xl)) - Lkjr;
+        double t2 = min((L(mat,k,j,xr) + L(mat,k,j-1,xr))/2., Q(mat,k,j-1,xr)) - Lkjl;
+        theta[k] = min(t1/b1,min(t2/b2,1.0));
+      }
     }
     else if(q[j-1][k] > q[j][k] && q[j][k] > q[j+1][k])
     {
@@ -247,16 +381,20 @@ ElasticState theta(const Material& mat, int j)
       double Qkjl = Q(mat,k,j,xl); double Lkjl = L(mat,k,j,xl);
 
       double b1 = max(Qkjr, Qkjl) - Lkjl;
+
       if(b1 == 0.0)
         theta[k] = 1.0;
+
       double b2 = max(Qkjr, Qkjl) - Lkjr;
+
       if(b2 == 0.0)
         theta[k] = 1.0;
 
-      double t1 = max((L(mat,k,j,xr) + L(mat,k,j-1,xr))/2., Q(mat,k,j-1,xr)) - Lkjl;
-      double t2 = max((L(mat,k,j,xl) + L(mat,k,j+1,xl))/2., Q(mat,k,j+1,xl)) - Lkjr;
-
-      theta[k] = min(t1/b1,min(t2/b2,1.0));
+      if(b1 != 0 || b2 != 0){
+        double t1 = max((L(mat,k,j,xr) + L(mat,k,j-1,xr))/2., Q(mat,k,j-1,xr)) - Lkjl;
+        double t2 = min((L(mat,k,j,xl) + L(mat,k,j+1,xl))/2., Q(mat,k,j+1,xl)) - Lkjr;
+        theta[k] = min(t1/b1,min(t2/b2,1.0));
+      }
     }
     else 
       theta[k] = 0.0;
@@ -264,73 +402,96 @@ ElasticState theta(const Material& mat, int j)
   return theta;
 }
 
-//In j's code this operates on a vector approach
-ElasticState flux(const Material& mat, const ElasticState& ql, const ElasticState& qr)
+ElasticState flux(Material& mat, ElasticState& ql, ElasticState& qr, double dx, double dt)
 {
-  double a = 5500; // get this from material information
-  return (mat.sys.flux(ql) + mat.sys.flux(qr) + a * (ql - qr))/2.;
+  /* double a = 6000; // get this from material information */
+  /* std::cout << dx/dt << std::endl; */
+  /* return (mat.sys.flux(ql) + mat.sys.flux(qr) + a * (ql - qr))/2.; */
+
+  //compute force flux 
+  double dt_dx = dt/dx;
+  ElasticState f_lf = (mat.sys.flux(ql) + mat.sys.flux(qr) + 1./dt_dx * (ql - qr))/2.;
+  ElasticState q_ri = 0.5*(ql + qr) + 0.5*dt_dx*(mat.sys.flux(ql) - mat.sys.flux(qr));
+  return 0.5 * (f_lf + mat.sys.flux(q_ri));
 }
 
-
-ElasticState rk3(ElasticState dx_dt, ElasticState q, double dt) //dx_dt, state, dt
+ElasticState rk1(ElasticState dq_dt, ElasticState q, double dt)
 {
-  ElasticState q1 =   q               +   dt * dx_dt;
-  ElasticState q2 = 3*q/4. +    q1/4. +   dt * dx_dt/4.;
-  ElasticState q3 =   q/3. +  2*q2/3. + 2*dt * dx_dt/3.;
+  ElasticState q1 = q + dt*dq_dt;
+  return q1;
+}
+
+ElasticState rk3(ElasticState dq_dt, ElasticState q, double dt) //dq_dt, state, dt
+{
+  ElasticState q1 =    q                +    dt*dq_dt;
+  ElasticState q2 = 3.*q/4. +     q1/4. +    dt*dq_dt/4.;
+  ElasticState q3 =    q/3. +  2.*q2/3. + 2.*dt*dq_dt/3.;
   return q3;
 }
 
 //runge kutta time stepping?
 void solveXPPM(Material& mat, const double dt) //evolve function
 {
-  double dx = mat.dom.dx/2.;
+  double dx = mat.dom.dx; //bug
   double xl = -dx/2.;
   double xr = dx/2.;
 
   vector<ElasticState> ql(mat.dom.GNi);
   vector<ElasticState> qr(mat.dom.GNi);
-  vector<ElasticState> dx_dt(mat.dom.GNi);
+  vector<ElasticState> dq_dt(mat.dom.GNi);
 
   //apply boundaries
-
   //need to get the number of ghost cells correct here.
   //3:104
+  /* #pragma omp parallel for schedule(dynamic) */
   for (int i = mat.dom.starti-1; i < mat.dom.endi+1; i++) 
   {
     ql[i] = P(mat,i,xl); //left reconstruction
     qr[i] = P(mat,i,xr); //left reconstruction
   }
 
+
+#ifdef debugrun_
+  outputAll("/home/raid/ma595/solid-1D/output/ql", ql);
+  outputAll("/home/raid/ma595/solid-1D/output/qr", qr);
+  outputAll("/home/raid/ma595/solid-1D/output/barton1D", mat.sol);
+#endif
+
   //compute fluxes between cells
   //4:103 (3 ghost cells either side
   ElasticState qlr, qml, qmr, qrl;
   ElasticState fl, fr;
-  
+ 
   for (int i = mat.dom.starti; i < mat.dom.endi; i++)
   {
     qlr = qr[i-1];
     qml = ql[i];
     qmr = qr[i];
     qrl = ql[i+1];
+    /* std::cout << qlr << " " << qml << " " << qmr << " " << qrl << std::endl; */
 
-    fl = flux(mat, qlr, qml);
-    fr = flux(mat, qmr, qrl);
+    /* std::cout << mat.sys.flux(qlr) << std::endl; */
+    /* std::cout << mat.sys.flux(qml) << std::endl; */
+    /* double a = 5500; */
+    /* ElasticState fluxState =  mat.sys.flux(qlr) - mat.sys.flux(qml) + a * (qlr - qrl); */ 
+    fl = flux(mat, qlr, qml, dx, dt);
+    fr = flux(mat, qmr, qrl, dx, dt);
 
-    dx_dt[i] = (fl - fr)/dx; // rearranged to avoid implementing additional operators // this is the derivative l in J's code.
+    dq_dt[i] = (fl - fr)/dx; // rearranged to avoid implementing additional operators // this is the derivative l in J's code.
   }
 
   // rk3 time-stepping
  
+  /* #pragma omp parallel for schedule(dynamic) */
   for (int i = mat.dom.starti; i < mat.dom.endi; i++)
   {
-    mat.sol[i] = rk3(dx_dt[i], mat.sol[i], dt); 
+    // test with normal euler time integration // what is the flux?
+    mat.sol[i] = rk3(dq_dt[i], mat.sol[i], dt); 
   }
 
   BCs(mat);
   
 }
-
-//
 
 void solveX(Material& mat, const double dt)
 {
@@ -383,7 +544,7 @@ ElasticState grad(const Material& mat, int i)
 	ElasticState delta = 0.5*(1+w)*num;// + 0.5*(1-w)*denom;
 	//aNew = Ui[i].soundSpeed();	
 	//cout << i << endl;	
-	for(int j = 0; j < ElasticState::e_size; j++)
+	for(unsigned int j = 0; j < ElasticState::e_size; j++)
 	{	
 		if(num[j] == 0 && den[j] == 0)
 		{
@@ -399,12 +560,11 @@ ElasticState grad(const Material& mat, int i)
 	}
 	//ElasticState r = num/denom;
 	ElasticState deltaold = delta;	
-	for(int j = 0; j < ElasticState::e_size; j++)
+	for(unsigned int j = 0; j < ElasticState::e_size; j++)
 	{
 		const double ksi = slopelim(r[j]);
 		//ksi = 1;
 		delta[j] *= ksi; 	 
-    
 	}
 	return delta; 
 } 
@@ -413,7 +573,7 @@ ElasticState grad(const Material& mat, int i)
 double getMinDt(const Material& mat)
 {
 	double Smax = 0, a, u_1;
-	a = 5500; //to be calculated
+	a = 10000; //to be calculated
 	/* double c = ElasticState::soundSpeed(); */
 	//! Convert to primitive 
 
@@ -539,6 +699,27 @@ double ksi_r(double r)
 	return 2.*beta_fw/(1. - w + (1. + w)*r);
 }
 
+//this function outputs all the conservative state and all boundary conditions
+//may be better to include 
+void outputAll(string file, const vector<ElasticState> vec)
+{
+	ofstream output;	
+  output.open(file.c_str()); //we append all results to the same file 
+  int GCs = 3;
+  double dx = 1./(vec.size()-2*GCs);
+  for (unsigned int i = 0; i < vec.size(); i++)
+  {
+	  output << (double)dx*((i-GCs)+0.5);
+    ElasticState consState = vec[i];	
+    for(unsigned int i = 0 ; i < ElasticState::e_size; i++)
+    {
+      output << '\t' << consState[i];
+    }
+    output << endl;
+  }
+  output.close();
+}
+
 void outputGnu(string file, Material mat, int outStep, double t)
 {
 	/* int ret = system(("mkdir -p " + fileName).c_str()); */
@@ -649,7 +830,8 @@ void advance(Material& mat, const double dt) //or evolve?
 // apply curl constraint (2D) // geometric -
 // cylindrical //spherical bcs //plasticity
   //series of advance functions: levelset, geometric bcs, 
-  solveX(mat, dt);
+  solveXPPM(mat, dt);
+  /* solveX(mat, dt); */
 }
 
 
@@ -670,11 +852,20 @@ int solveSystem(InputSolid inputSolid, Material* mat){
 	while(t < tend)
 	{
 		BCs(*mat);
+    #ifdef debugrun_
+    std::cout << "writing initial condition + BCs" << std::endl;
+    outputAll(outFile, (*mat).sol);
+    outputAll("/home/raid/ma595/solid-1D/output/initBCs", (*mat).sol);
+    #endif
 		//1. calculate time step: CFL and boundary conditions pg 495
 		dt = getMinDt(*mat);
 		/* if(step < 20)	{dt /= 10;} */
 		dt *= CFL;
 
+
+#ifdef debugrun_
+    cout << "The calculated time-step is: " << dt << endl;
+#endif
 
     if(t < outStep * outFreq && t + dt > outStep * outFreq) {
       dt = outStep * outFreq - t;
@@ -830,13 +1021,13 @@ int main(int argc, char ** argv)
   ElasticPrimState primStateR(inputSolid.uR, inputSolid.FR, inputSolid.SR);
   double iface = inputSolid.iface;
   ICInterface(*mat, iface, primStateL, primStateR);
-
+  outputAll("/home/raid/ma595/solid-1D/output/initial", (*mat).sol);
   //get limiter
   getLimiter(inputSolid);
 
   #ifdef debug_
   unitTests(*mat, primStateL, primStateR);
-  exit(1);
+  exit(1); //return 0
   #endif
   //solvesystem
   double begin = omp_get_wtime();
@@ -845,6 +1036,7 @@ int main(int argc, char ** argv)
   double elapsed_secs = double(end - begin);
   std::cout << "TIME " << elapsed_secs << std::endl;
   delete mat;
+  return 0;
 }
 
 

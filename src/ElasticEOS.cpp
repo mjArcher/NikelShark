@@ -101,7 +101,9 @@ double ElasticEOS::entropy(Vector3d I, double internalEnergy) const
 	double term2 = (B0/2.)*I_3b*(pow(I[0], 2)/3. - I[1]);
 	double term3 = cv*T0*I_3g;
 
+  /* std::cout << cv << " " << term1 << " " << term2 << " " << term3 << " " << internalEnergy << std::endl; */
 	return cv*log(1. + (internalEnergy - term1 - term2)/term3);
+
 }
 
 //rethink where this function should go

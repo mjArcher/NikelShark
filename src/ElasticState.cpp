@@ -131,7 +131,7 @@ ElasticState operator*(const double& s, const ElasticState& rhs)
 
 ElasticState operator/(const ElasticState& lhs, const double& s)
 {
-  return lhs/s;
+  return lhs*(1.0/s);
 }
 
 

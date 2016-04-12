@@ -26,6 +26,7 @@ set lmargin 10
 set ylabel "{/Symbol r} (g/cm^3) " offset 0
 plot "`echo $elasticout`" index i u 1:2 w p ls lis title "my", "`echo $refout`" u ($1/100):2 w p ls lis2 lc rgb "green" title "cns", "`echo $refkevout`" u 1:2 w p ls lis2 lc rgb "blue" title "kev"
 
+
 set ylabel "u_1 (km/s)" offset 0
 plot "`echo $elasticout`" index i u 1:3 w p ls lis title "my", "`echo $refout`" u ($1/100):4 w p ls lis2 lc rgb "green" title "cns", "`echo $refkevout`" u 1:3 w p ls lis2 lc rgb "blue" title "kev"
 
