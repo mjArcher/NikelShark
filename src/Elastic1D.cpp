@@ -230,6 +230,9 @@ ElasticState WENO_recon(Material& mat, int i, bool right)
   return weno;
 }
 
+ElasticState flux(Material& mat, ElasticState& ql, ElasticState& qr, double dx, double dt);
+ElasticState rk3(ElasticState dq_dt, ElasticState q, double dt); //dq_dt, state, dt
+
 void solveXWENO(Material& mat, const double dt)
 {
   //From Shu (1998) pg 353 
@@ -242,6 +245,7 @@ void solveXWENO(Material& mat, const double dt)
   double dx = mat.dom.dx; //bug
   vector<ElasticState> vl(mat.dom.GNi); // left reconstruction v_i-1/2(+) : right side 
   vector<ElasticState> vr(mat.dom.GNi); // right reconstruction v_i+1/2(-) : left side 
+  vector<ElasticState> dv_dt(mat.dom.GNi);
 
   //assuming boundary conditions already applied.
   for (int i = mat.dom.starti-1; i < mat.dom.endi+1; i++)
@@ -251,6 +255,39 @@ void solveXWENO(Material& mat, const double dt)
     vr[i] = WENO_recon(mat, i, false);
   }
 
+  ElasticState vlr, vml, vmr, vrl;
+  ElasticState fl, fr;
+ 
+  for (int i = mat.dom.starti; i < mat.dom.endi; i++)
+  {
+    vlr = vr[i-1];
+    vml = vl[i];
+    vmr = vr[i];
+    vrl = vl[i+1];
+    /* std::cout << qlr << " " << qml << " " << qmr << " " << qrl << std::endl; */
+
+    /* std::cout << mat.sys.flux(qlr) << std::endl; */
+    /* std::cout << mat.sys.flux(qml) << std::endl; */
+    /* double a = 5500; */
+    /* ElasticState fluxState =  mat.sys.flux(qlr) - mat.sys.flux(qml) + a * (qlr - qrl); */ 
+    fl = flux(mat, vlr, vml, dx, dt);
+    fr = flux(mat, vmr, vrl, dx, dt);
+
+    dv_dt[i] = (fl - fr)/dx; // rearranged to avoid implementing additional operators // this is the derivative l in J's code.
+  }
+
+  // rk3 time-stepping
+ 
+  /* #pragma omp parallel for schedule(dynamic) */
+  for (int i = mat.dom.starti; i < mat.dom.endi; i++)
+  {
+    // test with normal euler time integration // what is the flux?
+    mat.sol[i] = rk3(dv_dt[i], mat.sol[i], dt); 
+  }
+
+  BCs(mat);
+  
+}
   //need to do a similar thing as ppm: (RK timestepping)
   /* for (int i = mat.dom.starti; i < mat.dom.endi; i++) */
   /* { */
@@ -261,7 +298,6 @@ void solveXWENO(Material& mat, const double dt)
 
   /* } */
   //compute force flux using WENO reconstructions 
-}
 
 //need following functions:
 //ppm
