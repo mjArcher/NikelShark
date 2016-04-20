@@ -135,17 +135,20 @@ bool operator==(const ElasticPrimState& p1, const ElasticPrimState& p2)
   return v1.isApprox(v2, 1e-10);
   /* std::cout << p1.S_() << " " << p2.S_() << std::endl; */
   /* return p1.u_().isApprox(p2.u_())&&p1.F_().isApprox(p2.F_())&&p1.S_().isApprox(p2.S_()); */
+}
 
+bool operator!=(const ElasticPrimState& p1, const ElasticPrimState& p2)
+{
+  return !(p1==p2);
 }
 
 SquareTensor3 ElasticPrimState::dI_dG(const Matrix3d& G, const Vector3d& inv) const
 {
-	vector<Matrix3d> dI_dG; 	
+	vector<Eigen::Matrix3d> dI_dG(3); 	
 	Matrix3d ID = Matrix3d::Identity();	
 	dI_dG[0] = ID; 
 	dI_dG[1] = inv(0) * ID - G.transpose(); 
 	dI_dG[2] = inv(2) * G.transpose().inverse();
-
 	SquareTensor3 tensor(dI_dG);
 	return tensor;
 }

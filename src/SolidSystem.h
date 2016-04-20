@@ -42,7 +42,7 @@ class System {
 		Eigen::Matrix3d strainTensor(const Eigen::Matrix3d& F) const;
 
 		//! Vector of invariants computed from finger tensor
-		Eigen::Vector3d getInvariants(const Eigen::Matrix3d& F) const;
+    Eigen::Vector3d getInvariants(const Eigen::Matrix3d& F) const;
 
     ElasticState flux(const ElasticPrimState&) const;
 
@@ -64,7 +64,7 @@ class System {
 		double maxWaveSpeeds() const;
 
 		//! Compute the acoustic tensor 
-		Eigen::Matrix3d AcousticTensor(const ElasticPrimState& pri, const double rho) const;
+		Eigen::Matrix3d AcousticTensor(const ElasticPrimState& pri) const;
 
     ElasticState godunovFlux(const ElasticState& qL, const ElasticState& qR) const;
 

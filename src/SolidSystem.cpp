@@ -159,16 +159,16 @@ Matrix3d System::stress(const ElasticPrimState& primState) const
 	return sigma;
 }
 
-Matrix3d System::AcousticTensor(const ElasticPrimState& primState, const double rho) const
+Matrix3d System::AcousticTensor(const ElasticPrimState& primState) const
 {
+  double rho = Density(primState);
 	const Matrix3d F = primState.F_();
 	const Matrix3d G = strainTensor(F);
 	const Vector3d I = getInvariants(F);
+  Matrix3d omega;
 	const SquareTensor3 dsdFe = dstress_dF(primState, G, I); //need to decide on a return type here
 	//construct acoustic tensor	i, j, k, m : i does not change for 1D 
-	
 	//population of acoustic tensor
-  Matrix3d omega;
 	//dirn = 0 for 1D problem
   for(int i=0; i<3; ++i){
     for(int j=0; j<3; ++j){
@@ -247,7 +247,7 @@ VectorXd System::stateEigenDecompose(const ElasticPrimState& pW,
 	/* const Invariants inv = G.getInvariants(); */
 	const ElasticState consState = primitiveToConservative(pW);
 	
-	const Matrix3d omega = AcousticTensor(pW, rho);
+	const Matrix3d omega = AcousticTensor(pW);
   //tomorrow: check the acoustic tensor construction against Kevin.
   //
 

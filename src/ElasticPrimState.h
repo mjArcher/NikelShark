@@ -75,4 +75,6 @@ class ElasticPrimState
 
     bool operator==(const ElasticPrimState& lhs, const ElasticPrimState& rhs);
 
+    bool operator!=(const ElasticPrimState& lhs, const ElasticPrimState& rhs);
+
 #endif
