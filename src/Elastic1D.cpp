@@ -102,14 +102,18 @@ void ICInterface(Material& mat,
   }
 }
 
-void solveXGodunov()
+//supply left state 
+void solveXGodunov(Material& mat, const double dt)
 {
-	//0. Convert to primitive state and estimate primitive state at the i+1/2 position
-	//1. construct acoustic tensor
-	//2. Perform eigen decomposition to get eigen values and ortogonal marix
-	//3. construct left and right eigen vectors
-	//4. Solve linear system by multiplying by one of these eigenvectors to get coefficients
-	//5. Reconstruct primitive state
+	const double dt_dX = dt/mat.dom.dx;
+  const vector<ElasticState> soln = mat.sol;
+  #pragma omp parallel for schedule(dynamic)
+	for(int i = mat.dom.starti - 1; i < mat.dom.endi + 1; i++)
+	{
+	  mat.sol[i] += dt_dX*(mat.sys.godunovFlux(soln[i-1], soln[i]) - mat.sys.godunovFlux(soln[i], soln[i+1]));
+	}
+	//printArray(U);
+	BCs(mat);
 }
 
 ElasticState forceFlux(System& sys, vector<ElasticState>& left, vector<ElasticState>& right, double dt_dX, int i)
@@ -119,13 +123,6 @@ ElasticState forceFlux(System& sys, vector<ElasticState>& left, vector<ElasticSt
 	ElasticState F_force = 0.5*(F_lf + sys.flux(C_r));
 	return F_force;
 }
-
-
-void solveXForce(Material& mat, const double dt)
-{
-   
-}
-
 
 double alpha_r(double d_r, double beta_r)
 {
@@ -141,21 +138,21 @@ vector<ElasticState> beta(vector<ElasticState>& soln, int k, int i)
   vector<ElasticState> b(k);
   for(unsigned int j = 0; j < ElasticState::e_size; j++)
   {
-    b[0][j] = 13./12.*pow((soln[i][j] -   2*soln[i+1][j] + soln[i+2][j]), 2.) + 1./4.*pow((3.*soln[i][j] - 4.*soln[i+1][j] + soln[i+2][j]), 2);
-    b[1][j] = 13./12.*pow((soln[i-1][j] - 2*soln[i][j]   + soln[i+1][j]), 2.) + 1./4.*pow(( soln[i-1][j] +    soln[i+1][j]), 2);
-    b[2][j] = 13./12.*pow((soln[i-2][j] - 2*soln[i-1][j] + soln[i][j]), 2.)   + 1./4.*pow(( soln[i-2][j] - 4.*soln[i-1][j] + 3*soln[i][j]), 2);
+    b[0][j] = 13./12.*pow((soln[i][j] -   2.*soln[i+1][j] + soln[i+2][j]), 2.) + 1./4.*pow((3.*soln[i][j] - 4.*soln[i+1][j] + soln[i+2][j]), 2);
+    b[1][j] = 13./12.*pow((soln[i-1][j] - 2.*soln[i][j]   + soln[i+1][j]), 2.) + 1./4.*pow(( soln[i-1][j] +    soln[i+1][j]), 2.);
+    b[2][j] = 13./12.*pow((soln[i-2][j] - 2.*soln[i-1][j] + soln[i][j]), 2.)   + 1./4.*pow(( soln[i-2][j] - 4.*soln[i-1][j] + 3.*soln[i][j]), 2);
   }
   return b;
 }
 
 vector<ElasticState> omega(Material& mat, vector<ElasticState> vr, int soln_ind, bool right)
 {
-  const double d[3] = {3/10, 3/5, 1/10}; // and dbar_r = d_{k-1-r}
+  const double d[3] = {3./10., 3./5., 1./10.}; // and dbar_r = d_{k-1-r}
   int k = vr.size();
   vector<ElasticState> w(k);  // r .. k
   double d_r;
-  //need to find the smoothness indicators for all r = 0,...,k-1 before looping over all states? This can be vectorised.
-
+  //find smoothness indicators for all r = 0,...,k-1 before looping over all states? This can be vectorised.
+  //3xElasticState
   vector<ElasticState> beta_r = beta(mat.sol, w.size(), soln_ind); // store 1, 2 and 3.
 
   for(unsigned int r = 0; r < vr.size(); r++)
@@ -189,12 +186,11 @@ ElasticState WENO_recon(Material& mat, int i, bool right)
 {
   const int r = 4, j = 3; // r = -1, 0, 1, 2 :: j = 0, 1, 2, 3
   const double C[r][j] = {
-    {11/6, -7/6,  1/3} , 
-    { 1/3,  5/6, -1/6} ,
-    {-1/6,  5/6,  1/3} ,
-    { 1/3, -7/6, 11/6} ,
+    {11./6., -7./6.,  1./3.} , 
+    { 1./3.,  5./6., -1./6.} ,
+    {-1./6.,  5./6.,  1./3.} ,
+    { 1./3., -7./6., 11./6.} ,
   };
-  double eps = 1e-6; 
   ElasticState weno;
 
   unsigned short int k = 3;
@@ -211,9 +207,11 @@ ElasticState WENO_recon(Material& mat, int i, bool right)
     for(unsigned int j = 0; j < k; j++)
     {
       //k different reconstructions of v+-1/2
-      vr[r] = C[r + Crinc][j] * q[i-r+j];
+      vr[r] += C[r + Crinc][j] * q[i-r+j]; // check this!
+      /* std::cout << "r " <<  r << " j " << j << " " << std::endl; */
     }
   }
+
 
   //calculate left and right weights form reconstructions on each variable separately 
   //need r sets of weights (each applied to individual variables)
@@ -223,10 +221,10 @@ ElasticState WENO_recon(Material& mat, int i, bool right)
   {
     for(unsigned int j = 0; j < ElasticState::e_size; j++)
     {
-      weno += w[r][j]*vr[j];
+      weno[j] += w[r][j]*vr[r][j];
     }
   }
-
+  /* std::cout << weno << std::endl; */
   return weno;
 }
 
@@ -243,17 +241,21 @@ void solveXWENO(Material& mat, const double dt)
   // r has 4 possible values, but we iterate from 0 to 2
   //for k = 3 
   double dx = mat.dom.dx; //bug
-  vector<ElasticState> vl(mat.dom.GNi); // left reconstruction v_i-1/2(+) : right side 
-  vector<ElasticState> vr(mat.dom.GNi); // right reconstruction v_i+1/2(-) : left side 
+  vector<ElasticState> vl(mat.dom.GNi); // left reconstruction v_i-1/2(+) : 
+  vector<ElasticState> vr(mat.dom.GNi); // right reconstruction v_i+1/2(-) : 
   vector<ElasticState> dv_dt(mat.dom.GNi);
 
   //assuming boundary conditions already applied.
   for (int i = mat.dom.starti-1; i < mat.dom.endi+1; i++)
   {
     //compute reconstructions
-    vl[i] = WENO_recon(mat, i, true);
-    vr[i] = WENO_recon(mat, i, false);
+    vr[i] = WENO_recon(mat, i, true);
+    /* vl[i] = WENO_recon(mat, i, false); */
   }
+
+  /* outputAll("/home/raid/ma595/solid-1D/output/vl", vl); */
+  outputAll("/home/raid/ma595/solid-1D/output/vr", vr);
+  exit(1);
 
   ElasticState vlr, vml, vmr, vrl;
   ElasticState fl, fr;
@@ -276,6 +278,7 @@ void solveXWENO(Material& mat, const double dt)
     dv_dt[i] = (fl - fr)/dx; // rearranged to avoid implementing additional operators // this is the derivative l in J's code.
   }
 
+
   // rk3 time-stepping
  
   /* #pragma omp parallel for schedule(dynamic) */
@@ -284,6 +287,7 @@ void solveXWENO(Material& mat, const double dt)
     // test with normal euler time integration // what is the flux?
     mat.sol[i] = rk3(dv_dt[i], mat.sol[i], dt); 
   }
+
 
   BCs(mat);
   
@@ -529,7 +533,7 @@ void solveXPPM(Material& mat, const double dt) //evolve function
   
 }
 
-void solveX(Material& mat, const double dt)
+void solveXSLIC(Material& mat, const double dt)
 {
 	int N = mat.dom.GNi;
 	vector<ElasticState> left(N);
@@ -735,7 +739,7 @@ double ksi_r(double r)
 	return 2.*beta_fw/(1. - w + (1. + w)*r);
 }
 
-//this function outputs all the conservative state and all boundary conditions
+//this function outputs the conservative state and all boundary conditions
 //may be better to include 
 void outputAll(string file, const vector<ElasticState> vec)
 {
@@ -743,13 +747,18 @@ void outputAll(string file, const vector<ElasticState> vec)
   output.open(file.c_str()); //we append all results to the same file 
   int GCs = 3;
   double dx = 1./(vec.size()-2*GCs);
-  for (unsigned int i = 0; i < vec.size(); i++)
+  double state;
+  for (int i = GCs; i < vec.size()-GCs; i++)
   {
 	  output << (double)dx*((i-GCs)+0.5);
     ElasticState consState = vec[i];	
     for(unsigned int i = 0 ; i < ElasticState::e_size; i++)
     {
-      output << '\t' << consState[i];
+      if(consState[i] < 1e-20)
+        state = 0;
+      else
+        state = consState[i];
+      output << '\t' << state;
     }
     output << endl;
   }
@@ -863,11 +872,12 @@ void outputGnu(string file, Material mat, int outStep, double t)
 
 void advance(Material& mat, const double dt) //or evolve?
 {
+  //add the plasticity bit
 // apply curl constraint (2D) // geometric -
 // cylindrical //spherical bcs //plasticity
   //series of advance functions: levelset, geometric bcs, 
-  solveXPPM(mat, dt);
-  /* solveX(mat, dt); */
+  /* solveXWENO(mat, dt); */
+  solveXSLIC(mat, dt);
 }
 
 
@@ -897,7 +907,6 @@ int solveSystem(InputSolid inputSolid, Material* mat){
 		dt = getMinDt(*mat);
 		/* if(step < 20)	{dt /= 10;} */
 		dt *= CFL;
-
 
 #ifdef debugrun_
     cout << "The calculated time-step is: " << dt << endl;

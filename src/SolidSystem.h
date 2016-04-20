@@ -44,9 +44,11 @@ class System {
 		//! Vector of invariants computed from finger tensor
 		Eigen::Vector3d getInvariants(const Eigen::Matrix3d& F) const;
 
+    ElasticState flux(const ElasticPrimState&) const;
+
 		ElasticState flux(const ElasticState&) const;
-		//! vector of fluxes  
-		ElasticState flux(const ElasticState& consState, const ElasticPrimState& primState) const;
+		
+    ElasticState flux(const ElasticState& consState, const ElasticPrimState& primState) const;
 
 		//! Symmetric matrix of stresses.
 		Eigen::Matrix3d stress(const ElasticPrimState&) const;
@@ -64,16 +66,21 @@ class System {
 		//! Compute the acoustic tensor 
 		Eigen::Matrix3d AcousticTensor(const ElasticPrimState& pri, const double rho) const;
 
-	private:
+    ElasticState godunovFlux(const ElasticState& qL, const ElasticState& qR) const;
+
+  private:
 
 		SquareTensor3 dstress_dF(const ElasticPrimState&, const Eigen::Matrix3d& G, const Eigen::Vector3d& inv) const;
 
 		std::vector<Eigen::Matrix3d> dep_dF(const SquareTensor3, const Eigen::Matrix3d) const;
-	
-		
+
+    //prototype may need to be modified 
+	  ElasticPrimState godunovState(const ElasticPrimState pL, const ElasticPrimState pR) const;
+
+
+    /* ElasticState godunovFlux(const ElasticPrimState& pL, const ElasticPrimState& pR); */
 
 		//! Derivatives required for the computation of the acoustic tensor
-
 		//! Derivative of stress (sigma) w.r.t density
 		/* Eigen::Tensor<double, 4> dstressrho(const ) const; */
 

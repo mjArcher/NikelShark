@@ -68,9 +68,14 @@ Vector3d System::getInvariants(const Matrix3d& F) const
 	// Calculate invariants
 	Vector3d I;
 	I[0] = G.trace();
-	I[1] = 0.5*(pow(G.trace(), 2)-(G*G).trace());
+	I[1] = 0.5*(G.trace()*G.trace()-(G*G).trace());
 	I[2] = G.determinant();
 	return I;
+}
+
+ElasticState System::flux(const ElasticPrimState& primState) const 
+{
+  return flux(primitiveToConservative(primState), primState);
 }
 
 ElasticState System::flux(const ElasticState& consState) const
@@ -231,7 +236,7 @@ SquareTensor3 System::dstress_dF(const ElasticPrimState& primState, const Matrix
 	return dstressdF;
 }
 
-//decompose acoustic tensor
+//construct and then decompose acoustic tensor: get Q, D, A and then construct Le, Re and 
 VectorXd System::stateEigenDecompose(const ElasticPrimState& pW,
 		const int dirn,
 		vector<ElasticPrimState>& Le,
@@ -243,10 +248,54 @@ VectorXd System::stateEigenDecompose(const ElasticPrimState& pW,
 	const ElasticState consState = primitiveToConservative(pW);
 	
 	const Matrix3d omega = AcousticTensor(pW, rho);
+  //tomorrow: check the acoustic tensor construction against Kevin.
+  //
 
-	Vector3d dummy;	
-	return dummy;
 
+  //construct Le and Re (using Kevin's code as a guide)
+  //Once this is working we can get it going in 2D
+	/* Vector3d dummy; */	
+	/* return dummy; */
+}
+
+ElasticState System::godunovFlux(const ElasticState& qL, const ElasticState& qR) const
+{
+  return flux(godunovState(conservativeToPrimitive(qL), conservativeToPrimitive(qR)));
+}
+
+/* ElasticState System::godunovFlux(const ElasticPrimState& pL, const ElasticPrimState& pR) */
+/* { */
+/*   return flux(primitiveToConservative(godunovState(pL, pR))); */
+/* } */
+
+//compute state at interface between L and R states 
+ElasticPrimState System::godunovState(ElasticPrimState pL, ElasticPrimState pR) const
+{
+  if (pL == pR)
+    return pL;
+  // compute the eigenvalues, L and R eigenvectors.
+  // decompose the acoustic tensor to get Q, D and Q
+  // construct the diagonal matrix of eigenvalues (w).
+  // construct the godunov state based on this 
+  //
+  /* const ElasticPrimState pW = interpolate(0.5, Q1, Q2);  // this is a very complicated function (can we just take the avg?) */
+
+  const ElasticPrimState pW = 0.5*(pL + pR);
+  vector<ElasticPrimState> Le(14), Re(14); //test if this has actually initialised correctly.
+  const VectorXd lambda = stateEigenDecompose(pW, 0, Le, Re); // within this construct the acoustic tensor
+
+  /* VectorXd VectorXd(ElasticPrimState::e_size); */
+  //compute the primitive variable jump across the Riemann problem:
+  const ElasticPrimState dp = pR - pL; 
+
+  ElasticPrimState god = pL;
+  for(int w=0; w<14; ++w) {
+    if(lambda[w]<0.0) {
+      /* const double strength = dot(Le[w], dp); //need to rewrite this line */ 
+      /* if(strength!=0.0) god+=strength*Re[w]; */
+    }
+  }
+  return god;
 }
 	
 /* TinyVector<double, 14> System::StateEigenDecompose(const ElasticPrimState& pW, */

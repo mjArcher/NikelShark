@@ -26,8 +26,13 @@ int main ()
     cout << "This also works" << endl;
 
 
-  cout << 1./2. * 2. << endl;
+  cout << 1/2 * 2. << endl;
   cout << 13/12 << endl;
+
+  const double d[3] = {3./10., 3./5., 1./10.};
+  cout << d[0] << endl;
+
+  /* cout << 0/0 << endl; */
 
   /* cout << b1||c1 << endl; */
   /* int i; */

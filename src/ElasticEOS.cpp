@@ -12,11 +12,11 @@ ElasticEOS::ElasticEOS(const string& mat)
 
 	if(mat == "copper")
 	{
-		rho0 = 8930;
-		c0 = 4600;
-		b0 = 2100;
-		cv = 390;
-		T0 = 300;
+		rho0 = 8930.;
+		c0 = 4600.;
+		b0 = 2100.;
+		cv = 390.;
+		T0 = 300.;
 		alpha = 1.001;
 		beta = 3.001;
 		gamma = 2.001;
@@ -73,7 +73,7 @@ double ElasticEOS::internalEnergy(Vector3d I, double S) const
 	/* cout << I[2] << " cv "; */
 	/* cout << "Here 3 " << endl; */
 
-	U = (K0/(2.*alpha*alpha))*pow((pow(I(2),alpha/2.))-1,2.)+ cv*T0*pow(I(2),gamma/2.)*(exp(S/cv)-1.);
+	U = (K0/(2.*alpha*alpha))*pow((pow(I(2),alpha/2.))-1.,2.)+ cv*T0*pow(I(2),gamma/2.)*(exp(S/cv)-1.);
 	W = (B0/2.)*pow(I(2),beta/2.)*(pow(I(0),2)/3. - I(1));
 
 	/* cout << S << " " << alpha << " " << beta << " " << gamma << " " << cv << " " << B0 << " " << T0 << " " << K0 << endl; */
@@ -97,8 +97,10 @@ double ElasticEOS::entropy(Vector3d I, double internalEnergy) const
 	double I_3b = pow(I[2], beta/2.);
 	double I_3g = pow(I[2], gamma/2.);
 
-	double term1 = 0.5*(K0/pow(alpha,2))*pow((I_3a-1.),2.);
-	double term2 = (B0/2.)*I_3b*(pow(I[0], 2)/3. - I[1]);
+	/* double term1 = 0.5*(K0/pow(alpha,2))*pow((I_3a-1.),2.); */
+  double coeff = 0.5;
+	double term1 = coeff*(K0/pow(alpha,2.))*(I_3a-1.)*(I_3a-1.);
+	double term2 = (B0/2.)*I_3b*(pow(I[0], 2.)/3. - I[1]);
 	double term3 = cv*T0*I_3g;
 
   /* std::cout << cv << " " << term1 << " " << term2 << " " << term3 << " " << internalEnergy << std::endl; */
@@ -154,7 +156,7 @@ Matrix3d ElasticEOS::depsi_dI_dI(const Vector3d& I, double S) const
 	double fact = B0*beta*I3bd;
 	depsdI2(2,0) = (1./6.)*fact*I[0]; //dI3dI1
 	depsdI2(2,1) = -(1./4.)*fact; //dI3dI2
-	depsdI2(2,2) = (alpha/2. - 1) * cv * T0 * I3ad2 * (exp(S/cv)-1)
+	depsdI2(2,2) = (alpha/2. - 1.) * cv * T0 * I3ad2 * (exp(S/cv)-1)
 									+ (1./4.) * (beta/2.-1) * B0 * beta * I3ab2 * ((1./3.)*(pow(I[0],2)) - I[1]);
 										+ (K0/(2.*alpha))*((alpha/2.)*pow(I3ad,2.)+(I3a-1.)*((alpha/2.) - 1.) * I3ad2); //dI3dI3
 	return depsdI2;

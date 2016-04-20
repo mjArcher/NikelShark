@@ -63,17 +63,17 @@ std::ostream& operator<<(std::ostream& os, const ElasticPrimState& param)
 	return os;
 }
 
-ElasticPrimState& ElasticPrimState::operator+=(const ElasticPrimState& consState)
+ElasticPrimState& ElasticPrimState::operator+=(const ElasticPrimState& primState)
 {
 	// actual addition of rhs to *this
-	v += consState.getStateVector();
+	v += primState.getStateVector();
 	return *this;
 }
 
-ElasticPrimState& ElasticPrimState::operator-=(const ElasticPrimState& consState)
+ElasticPrimState& ElasticPrimState::operator-=(const ElasticPrimState& primState)
 {
 	// actual addition of rhs to *this
-	v -= consState.getStateVector();
+	v -= primState.getStateVector();
 	return *this;
 }
 
@@ -122,6 +122,20 @@ ElasticPrimState operator*(const double& s, const ElasticPrimState& rhs)
 ElasticPrimState operator/(const ElasticPrimState& lhs, const double& s)
 {
   return lhs/s;
+} 
+
+//this needs some thought: 
+bool operator==(const ElasticPrimState& p1, const ElasticPrimState& p2) 
+{
+  VectorXd v1 = p1.getStateVector();
+  VectorXd v2 = p2.getStateVector();
+  /* std::cout << v1.isApprox(v2) << std::endl; */
+  /* std::cout.precision(15); */
+  /* std::cout << v1 << " " << v2 << std::endl; */
+  return v1.isApprox(v2, 1e-10);
+  /* std::cout << p1.S_() << " " << p2.S_() << std::endl; */
+  /* return p1.u_().isApprox(p2.u_())&&p1.F_().isApprox(p2.F_())&&p1.S_().isApprox(p2.S_()); */
+
 }
 
 SquareTensor3 ElasticPrimState::dI_dG(const Matrix3d& G, const Vector3d& inv) const
@@ -151,6 +165,8 @@ SquareTensor3 ElasticPrimState::dI_dF(const Matrix3d& G, const Vector3d& inv) co
 	SquareTensor3 tensor(dI_dF);
 	return tensor;
 }
+
+
 
 //assuming that i is always 1 for 1D 
 //nneds to be changed for higher dimensions

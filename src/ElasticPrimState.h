@@ -60,7 +60,7 @@ class ElasticPrimState
 		/* Initial states */
 		
 	//! Solution vector
-		Eigen::VectorXd v;
+		Eigen::VectorXd v; //Check tomorrow: Does this have equality built in?
 };
 
 		ElasticPrimState operator+(const ElasticPrimState& lhs, const ElasticPrimState& rhs);
@@ -72,5 +72,7 @@ class ElasticPrimState
 		ElasticPrimState operator*(const double& s, const ElasticPrimState& rhs);
 
 		ElasticPrimState operator/(const ElasticPrimState& lhs, const double& s);
+
+    bool operator==(const ElasticPrimState& lhs, const ElasticPrimState& rhs);
 
 #endif
