@@ -1,6 +1,7 @@
 #Matt Archer. Makefile for Solid solved with riemann method v0.1 Feb 2014
 #   2 # Can use $(shell ...) which expands to the output of the argument(s))
 CUDA:=
+# CXX=/lsc/opt/bin/gcc-5.3
 CXX=g++
 CPPFLAGS=-fopenmp -pedantic -g -Wall -Wextra -std=c++0x #- $(shell root-config --cflags)
 LDFLAGS=-g #$(shell root-config --ldflags)

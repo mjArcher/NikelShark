@@ -22,11 +22,19 @@ class ElasticPrimState
 
 		~ElasticPrimState();	
 
+    //accessors
 		Eigen::Vector3d u_() const;
 
 		Eigen::Matrix3d F_() const;
 		
 		double S_() const;
+
+    //setters
+    void u(const Eigen::Vector3d&) const;
+
+    void F(const Eigen::Matrix3d&) const;
+
+    void S(const double&) const;
 
 		Eigen::VectorXd getStateVector() const {return v;};
 	
@@ -36,7 +44,7 @@ class ElasticPrimState
 
 		SquareTensor3 dI_dF(const Eigen::Matrix3d&, const Eigen::Vector3d&) const;
 
-		Eigen::Matrix3d dsigma_dG(int, int, const Eigen::Vector3d&, const Eigen::Matrix3d&, double) const;
+		Eigen::Matrix3d dsigma_dG(int, const Eigen::Vector3d&, const Eigen::Matrix3d&, double rho) const;
 
 		Eigen::Matrix3d dG_dF(const Eigen::Matrix3d& G, const Eigen::Matrix3d& F, int j, int m) const;
 		//! Overloaded operators
@@ -76,5 +84,8 @@ class ElasticPrimState
     bool operator==(const ElasticPrimState& lhs, const ElasticPrimState& rhs);
 
     bool operator!=(const ElasticPrimState& lhs, const ElasticPrimState& rhs);
+
+    
+
 
 #endif

@@ -22,6 +22,23 @@ ElasticPrimState::ElasticPrimState(){
 
 ElasticPrimState::~ElasticPrimState(){}
 
+void ElasticPrimState::u(const Vector3d& vel)
+{
+  v(0) = vel(0), v(1) = vel(1), v(2) = vel(2); 
+}
+
+void ElasticPrimState::F(const Matrix3d& mat)
+{
+  v(3) = mat(0,0), v(4) = mat(0,1), v(5) = mat(0,2), 
+  v(6) = mat(1,0), v(7) = mat(1,1), v(8) = mat(1,2),
+  v(9) = mat(2,0), v(10) = mat(2,1), v(11) = mat(2,2);
+}
+
+void ElasticPrimState::S(const double& S)
+{
+  v(12) = S; 
+}
+
 //! velocity vector
 Vector3d ElasticPrimState::u_() const
 {
@@ -162,7 +179,8 @@ SquareTensor3 ElasticPrimState::dI_dF(const Matrix3d& G, const Vector3d& inv) co
 	Matrix3d ident = Matrix3d::Identity();
 
 	dI_dF[0] = -2*G*m2FinvT;
-	dI_dF[1] = -2*(G - G.trace()*ident)*m2FinvT;
+	/* dI_dF[1] = -2*(G - G.trace()*ident)*m2FinvT; */
+	dI_dF[1] = -2*G*(inv(0)*ident - G.transpose())*m2FinvT;
 	dI_dF[2] = -2*inv(2)*m2FinvT;
 
 	SquareTensor3 tensor(dI_dF);
@@ -173,28 +191,29 @@ SquareTensor3 ElasticPrimState::dI_dF(const Matrix3d& G, const Vector3d& inv) co
 
 //assuming that i is always 1 for 1D 
 //nneds to be changed for higher dimensions
-Matrix3d ElasticPrimState::dsigma_dG(int i, int k, const Vector3d& de_dI, const Matrix3d& G, double rho) const
+Matrix3d ElasticPrimState::dsigma_dG(int k, const Vector3d& de_dI, const Matrix3d& G, double rho) const
 {
+
 	Matrix3d ds_dG;
 
 	if(k == 0){
 		ds_dG(0,0) = -(de_dI[0] + (G(1,1) + G(2,2))*de_dI[1] + (-G(1,2)*G(2,1) + G(1,1)*G(2,2))*de_dI[2]);
 
-		ds_dG(0,1) = G(1,0)*de_dI[1]-(G(1,2)*G(2,1) + G(1,0)*G(2,2))*de_dI[2];
+		ds_dG(0,1) = G(1,0)*de_dI[1]-(G(1,2)*G(2,0) - G(1,0)*G(2,2))*de_dI[2];
 
-		ds_dG(0,2) = G(2,1)*de_dI[1]-(-G(1,1)*G(2,1) + G(1,0)*G(2,1))*de_dI[2];
+		ds_dG(0,2) = G(2,0)*de_dI[1]-(-G(1,1)*G(2,0) + G(1,0)*G(2,1))*de_dI[2];
 
-		ds_dG(1,0) = G(0,1)*de_dI[1]-(G(0,2)*G(2,1) + G(0,1)*G(2,2))*de_dI[2];
+		ds_dG(1,0) = G(0,1)*de_dI[1]-(G(0,2)*G(2,1) - G(0,1)*G(2,2))*de_dI[2];
 
-		ds_dG(1,1) = G(0,0)*de_dI[1]+(-G(0,2)*G(2,0) + G(0,0)*G(1,2))*de_dI[2];
+		ds_dG(1,1) = -(G(0,0)*de_dI[1]+(-G(0,2)*G(2,0) + G(0,0)*G(2,2))*de_dI[2]);
 
 		ds_dG(1,2) = -G(0,1)*G(2,0) + G(0,0)*G(2,1)*de_dI[2];
 
-		ds_dG(2,0) = G(0,0)*de_dI[1]+(-G(0,2)*G(2,0) + G(0,0)*G(1,2))*de_dI[2];
+		ds_dG(2,0) = G(0,2)*de_dI[1]-(-G(0,2)*G(1,1) + G(0,1)*G(1,2))*de_dI[2];
 
 		ds_dG(2,1) = -G(0,2)*G(1,0) + G(0,0)*G(1,2)*de_dI[2];
 
-		ds_dG(2,2) = G(0,0)*de_dI[1]+(-G(0,1)*G(1,0) + G(0,0)*G(1,1))*de_dI[2];
+		ds_dG(2,2) = -(G(0,0)*de_dI[1]+(-G(0,1)*G(1,0) + G(0,0)*G(1,1))*de_dI[2]);
 	}
 	else if(k == 1){
 
@@ -214,19 +233,19 @@ Matrix3d ElasticPrimState::dsigma_dG(int i, int k, const Vector3d& de_dI, const 
 
 		ds_dG(2,1) = G(0,2)*de_dI[1];
 
-		ds_dG(2,2) = G(0,1)*de_dI[1];
+		ds_dG(2,2) = -G(0,1)*de_dI[1];
 	}
 	else if(k == 2){
 
 		ds_dG(0,0) = 0;
 
-		ds_dG(0,1) = -2*de_dI[1];
+		ds_dG(0,1) = G(1,2)*de_dI[1];
 
-		ds_dG(0,2) = de_dI[1] + G(1,1) * de_dI[1];
+		ds_dG(0,2) = -(de_dI[0] + G(1,1) * de_dI[1]);
 
 		ds_dG(1,0) = 0;
 
-		ds_dG(1,1) = G(0,2)*de_dI[1];
+		ds_dG(1,1) = -G(0,2)*de_dI[1];
 
 		ds_dG(1,2) = G(0,1)*de_dI[1];
 
@@ -237,9 +256,9 @@ Matrix3d ElasticPrimState::dsigma_dG(int i, int k, const Vector3d& de_dI, const 
 		ds_dG(2,2) = 0;
 
 	}
-	ds_dG *= 2.;
+	ds_dG *= 2.*rho;
 	return ds_dG;
-	
+  //more derivatives needed : check using 
 }
 
 //this is inefficient - may need to be changed

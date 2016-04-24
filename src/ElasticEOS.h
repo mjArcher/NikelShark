@@ -32,6 +32,8 @@ class ElasticEOS {
 
 		Eigen::Matrix3d depsi_dI_dI(const Eigen::Vector3d& I, double S) const;
 
+    Eigen::Vector3d depsi_dI_dS(const Eigen::Vector3d& I, double S) const;
+
 		~ElasticEOS();
 
 		double rho0; //this is public because it is required by  the density function in the system class 

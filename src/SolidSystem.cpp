@@ -41,6 +41,12 @@ ElasticState System::primitiveToConservative(const ElasticPrimState& primState) 
 	return consState;
 }
 
+double System::Density(const Eigen::Matrix3d& F) const 
+{
+	double rho = Eos.rho0/(F.determinant());	
+	return rho;
+}
+
 double System::Density(const ElasticPrimState& primState) const 
 {
 	Matrix3d F = primState.F_();
@@ -174,7 +180,7 @@ Matrix3d System::AcousticTensor(const ElasticPrimState& primState) const
     for(int j=0; j<3; ++j){
       omega(i,j) = 0.0;
       for(int k=0; k<3; ++k){	
-				omega(i,j) += dsdFe(i,j,k) * F(0,k);
+				omega(i,j) += dsdFe(i,j,k) * F(0,k); //symmetric 
       }
       omega(i,j) /= rho;
     }
@@ -191,7 +197,7 @@ vector<Matrix3d> System::dep_dF(const SquareTensor3 dI_dF, const Matrix3d depsi_
 
 	for(int p = 0; p < 3; ++p)//row in depsi_dI_dI
 	{
-		dEps_pdF = - depsi_dI_dI(p, 0)*dI_dF[0] - depsi_dI_dI(p, 1)*dI_dF[1] - depsi_dI_dI(p, 2)*dI_dF[2]; //
+		dEps_pdF =  depsi_dI_dI(p, 0)*dI_dF[0] + depsi_dI_dI(p, 1)*dI_dF[1] + depsi_dI_dI(p, 2)*dI_dF[2]; //
 		depsi_dF[p] = dEps_pdF;
 	}
 
@@ -204,6 +210,43 @@ vector<Matrix3d> System::dep_dF(const SquareTensor3 dI_dF, const Matrix3d depsi_
 // Need only store 
 // Aijk 
 // components of the acoustic tensor
+/* SquareTensor3 System::dstress_dF(const ElasticPrimState& primState, const Matrix3d& G, const Vector3d& I) const */
+/* { */
+/* 	const double rho = Density(primState); */
+/* 	const Matrix3d F = primState.F_(); */	
+/* 	const double ie =	Eos.internalEnergy(I, primState.S_()); */
+/* 	const Matrix3d dstress_drho = stress(primState)/rho; */
+/* 	const Matrix3d drho_dF = - rho * (F.inverse()).transpose(); */
+/* 	const Matrix3d m2rho = -2. * rho * G; */
+/* 	const vector<Eigen::Matrix3d> depsdF = dep_dF(primState.dI_dF(G,I), Eos.depsi_dI_dI(I, primState.S_())); */
+/* 	const Vector3d de_dI = Eos.depsi_dI(I, primState.S_()); */
+/* 	const SquareTensor3 dsdeps = m2rho * primState.dI_dG(G,I); //cannot remember this derivation? */
+/* 	double sigma_rho; */
+
+/* 	vector<Matrix3d> A(3); */
+/* 	const Matrix3d sigma = stress(primState); */
+
+/* 	for (int k = 0; k < 3; k++) */
+/*   { */
+/* 		sigma_rho = dstress_drho(0,k); */
+/* 		Matrix3d ds_dG = primState.dsigma_dG(k, de_dI, G, rho); */ 
+/*     for(int j = 0; j < 3; j++) */
+/*     { */
+/*       for(int m = 0; m < 3; m++){ */
+/* 				/1* A(k, m, j) -- row, column, depth -- index using A[j](k,m) - this is a std array *1/ */
+/* 				Matrix3d dGdF = primState.dG_dF(G,F,j,m); //returns 2d slice of tensor at j, m (denominator constant) */
+/* 				A[k](j,m) = sigma_rho * drho_dF(j,m) */ 
+/* 					 + depsdF[0](j,m) * dsdeps[0](0,k) */ 
+/*            + depsdF[1](j,m) * dsdeps[1](0,k) */ 
+/*            + depsdF[2](j,m) * dsdeps[2](0,k) */
+/*         + (dGdF * ds_dG).trace(); */
+/* 			} */
+/* 		} */
+/* 	} */ 
+/* 	SquareTensor3 dstressdF(A); */
+/* 	return dstressdF; */
+/* } */
+
 SquareTensor3 System::dstress_dF(const ElasticPrimState& primState, const Matrix3d& G, const Vector3d& I) const
 {
 	const double rho = Density(primState);
@@ -214,26 +257,33 @@ SquareTensor3 System::dstress_dF(const ElasticPrimState& primState, const Matrix
 	const Matrix3d m2rho = -2. * rho * G;
 	const vector<Eigen::Matrix3d> depsdF = dep_dF(primState.dI_dF(G,I), Eos.depsi_dI_dI(I, primState.S_()));
 	const Vector3d de_dI = Eos.depsi_dI(I, primState.S_());
-	const SquareTensor3 dsdeps = m2rho * primState.dI_dG(G,I); //This is incorrect - change to commutative multiplication (a different type of multiplication)
+	const SquareTensor3 dsdeps = m2rho * primState.dI_dG(G,I); //cannot remember this derivation?
 	double sigma_rho;
 
 	vector<Matrix3d> A(3);
 	const Matrix3d sigma = stress(primState);
 
-	for (int k = 0; k < 3; k++){
+	for (int k = 0; k < 3; k++)
+  {
 		sigma_rho = dstress_drho(0,k);
-		Matrix3d ds_dG = primState.dsigma_dG(0, k, de_dI, G, rho); //returns 2d slice of tensor at constant i,k
-		for(int m = 0; m < 3; m++){
-			for(int j = 0; j < 3; j++){
+		Matrix3d ds_dG = primState.dsigma_dG(k, de_dI, G, rho); 
+    for(int j = 0; j < 3; j++)
+    {
+      for(int m = 0; m < 3; m++){
 				/* A(k, m, j) -- row, column, depth -- index using A[j](k,m) - this is a std array */
-				Matrix3d dGdF = primState.dG_dF(G,F,j,m); //returns 2d slice of tensor at j, m
-				A[k](m,j) = sigma_rho * drho_dF(j, m) + (dGdF * ds_dG).trace()
-					 + depsdF[0](j,m) * dsdeps[0](0,k) + depsdF[1](j,m) * dsdeps[1](0,k) + depsdF[2](j,m) * dsdeps[2](0,k);
+				Matrix3d dGdF = primState.dG_dF(G,F,j,m); //returns 2d slice of tensor at j, m (denominator constant)
+				A[j](k,m) = sigma_rho * drho_dF(j,m) 
+					 + depsdF[0](j,m) * dsdeps[0](0,k) 
+           + depsdF[1](j,m) * dsdeps[1](0,k) 
+           + depsdF[2](j,m) * dsdeps[2](0,k)
+        + (dGdF * ds_dG).trace();
 			}
 		}
 	} 
+
 	SquareTensor3 dstressdF(A);
 	return dstressdF;
+
 }
 
 //construct and then decompose acoustic tensor: get Q, D, A and then construct Le, Re and 
@@ -248,14 +298,7 @@ VectorXd System::stateEigenDecompose(const ElasticPrimState& pW,
 	const ElasticState consState = primitiveToConservative(pW);
 	
 	const Matrix3d omega = AcousticTensor(pW);
-  //tomorrow: check the acoustic tensor construction against Kevin.
-  //
 
-
-  //construct Le and Re (using Kevin's code as a guide)
-  //Once this is working we can get it going in 2D
-	/* Vector3d dummy; */	
-	/* return dummy; */
 }
 
 ElasticState System::godunovFlux(const ElasticState& qL, const ElasticState& qR) const

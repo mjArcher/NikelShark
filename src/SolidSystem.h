@@ -32,6 +32,9 @@ class System {
 		//! Convert to conservative state
 		ElasticState primitiveToConservative(const ElasticPrimState& primState) const;
 
+    //! Calculate density from matrix
+    double Density(const Eigen::Matrix3d& F) const;
+
 		//! Calculate density from primitive state
 		double Density(const ElasticPrimState& primState) const;
 		
@@ -68,11 +71,14 @@ class System {
 
     ElasticState godunovFlux(const ElasticState& qL, const ElasticState& qR) const;
 
-  private:
-
+    //move this back
 		SquareTensor3 dstress_dF(const ElasticPrimState&, const Eigen::Matrix3d& G, const Eigen::Vector3d& inv) const;
 
 		std::vector<Eigen::Matrix3d> dep_dF(const SquareTensor3, const Eigen::Matrix3d) const;
+
+  private:
+
+
 
     //prototype may need to be modified 
 	  ElasticPrimState godunovState(const ElasticPrimState pL, const ElasticPrimState pR) const;

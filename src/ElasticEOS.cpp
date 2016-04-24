@@ -142,24 +142,36 @@ Matrix3d ElasticEOS::depsi_dI_dI(const Vector3d& I, double S) const
 	const double I3bd = pow(I[2], beta/2. - 1.);
 	const double I3gd = pow(I[2], gamma/2. - 1.);
 
-	const double I3ad2 = pow(I[2], alpha/2. - 2.);
+	const double I3aa2 = pow(I[2], alpha/2. - 2.);
 	const double I3ab2 = pow(I[2], beta/2. - 2.);
+	const double I3ag2 = pow(I[2], gamma/2. - 2.);
 	//first row 
 	depsdI2(0,0) = (1./3.)*B0*I3b; //dI1dI1
 	depsdI2(0,1) = 0;  //dI1dI2
-	depsdI2(0,2) = (beta/2.)*B0*I3bd*I[0]; //dI1dI3
+	depsdI2(0,2) = (beta/6.)*B0*I3bd*I[0]; //dI1dI3 
 	//second row
 	depsdI2(1,0) = 0; //dI2dI1
 	depsdI2(1,1) = 0; //dI2dI2
-	depsdI2(1,2) = -(1./4.)*I3bd; //dI2dI3
+	depsdI2(1,2) = -(1./4.)*B0*beta*I3bd; //dI2dI3 
 	//third row
 	double fact = B0*beta*I3bd;
 	depsdI2(2,0) = (1./6.)*fact*I[0]; //dI3dI1
 	depsdI2(2,1) = -(1./4.)*fact; //dI3dI2
-	depsdI2(2,2) = (alpha/2. - 1.) * cv * T0 * I3ad2 * (exp(S/cv)-1)
-									+ (1./4.) * (beta/2.-1) * B0 * beta * I3ab2 * ((1./3.)*(pow(I[0],2)) - I[1]);
-										+ (K0/(2.*alpha))*((alpha/2.)*pow(I3ad,2.)+(I3a-1.)*((alpha/2.) - 1.) * I3ad2); //dI3dI3
+  depsdI2(2,2) = 1./4.*B0*(beta/2.-1.)*beta*(I[0]*I[0]/3.-I[1])*I3ab2
+                    + 1./4.*pow(I[2],alpha-2.)*K0+(alpha/2.-1.)*I3aa2*(I3a-1.)*K0/(2.*alpha)
+                      + 1./2.*cv*T0*(exp(S/cv)-1.)*(gamma/2.-1.)*gamma*I3ag2;
 	return depsdI2;
+}
+
+//only one non-zero derivative deps/dI3/dS
+Vector3d ElasticEOS::depsi_dI_dS(const Vector3d& I, double S) const
+{
+  //differentiated with mathematica
+  Vector3d depsi_dS;
+  depsi_dS[0] = 0;
+  depsi_dS[1] = 0;
+  depsi_dS[2] =  0.5*T0*exp(S/cv)*gamma*pow(I[2],gamma/2. - 1);
+  return depsi_dS;
 }
 
 double ElasticEOS::soundSpeed() const
