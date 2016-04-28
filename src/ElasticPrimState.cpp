@@ -3,6 +3,8 @@
 using namespace Eigen;
 using namespace std;
 
+//there is a redundancy here. Note the accessor and setter functions.
+//
 //1. Calc U,
 ElasticPrimState::ElasticPrimState(Vector3d u, Matrix3d F, double S)
 {
@@ -17,7 +19,7 @@ ElasticPrimState::ElasticPrimState(Vector3d u, Matrix3d F, double S)
 // default constructor
 
 ElasticPrimState::ElasticPrimState(){
-	v = VectorXd(ElasticPrimState::e_size);
+	v = VectorXd::Zero(ElasticPrimState::e_size);
 }
 
 ElasticPrimState::~ElasticPrimState(){}

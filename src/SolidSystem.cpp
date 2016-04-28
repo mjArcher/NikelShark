@@ -210,6 +210,7 @@ vector<Matrix3d> System::dep_dF(const SquareTensor3 dI_dF, const Matrix3d depsi_
 // Need only store 
 // Aijk 
 // components of the acoustic tensor
+//
 /* SquareTensor3 System::dstress_dF(const ElasticPrimState& primState, const Matrix3d& G, const Vector3d& I) const */
 /* { */
 /* 	const double rho = Density(primState); */
@@ -222,6 +223,8 @@ vector<Matrix3d> System::dep_dF(const SquareTensor3 dI_dF, const Matrix3d depsi_
 /* 	const Vector3d de_dI = Eos.depsi_dI(I, primState.S_()); */
 /* 	const SquareTensor3 dsdeps = m2rho * primState.dI_dG(G,I); //cannot remember this derivation? */
 /* 	double sigma_rho; */
+
+/*   int dirn = 0;  //function argument eventually */
 
 /* 	vector<Matrix3d> A(3); */
 /* 	const Matrix3d sigma = stress(primState); */
@@ -236,9 +239,9 @@ vector<Matrix3d> System::dep_dF(const SquareTensor3 dI_dF, const Matrix3d depsi_
 /* 				/1* A(k, m, j) -- row, column, depth -- index using A[j](k,m) - this is a std array *1/ */
 /* 				Matrix3d dGdF = primState.dG_dF(G,F,j,m); //returns 2d slice of tensor at j, m (denominator constant) */
 /* 				A[k](j,m) = sigma_rho * drho_dF(j,m) */ 
-/* 					 + depsdF[0](j,m) * dsdeps[0](0,k) */ 
-/*            + depsdF[1](j,m) * dsdeps[1](0,k) */ 
-/*            + depsdF[2](j,m) * dsdeps[2](0,k) */
+/* 					 + depsdF[0](j,m) * dsdeps[0](dirn,k) */ 
+/*            + depsdF[1](j,m) * dsdeps[1](dirn,k) */ 
+/*            + depsdF[2](j,m) * dsdeps[2](dirn,k) */
 /*         + (dGdF * ds_dG).trace(); */
 /* 			} */
 /* 		} */
@@ -275,8 +278,16 @@ SquareTensor3 System::dstress_dF(const ElasticPrimState& primState, const Matrix
 				A[j](k,m) = sigma_rho * drho_dF(j,m) 
 					 + depsdF[0](j,m) * dsdeps[0](0,k) 
            + depsdF[1](j,m) * dsdeps[1](0,k) 
-           + depsdF[2](j,m) * dsdeps[2](0,k)
-        + (dGdF * ds_dG).trace();
+           + depsdF[2](j,m) * dsdeps[2](0,k);
+        /* + (dGdF * ds_dG).trace(); */
+        //removed the trace 
+        double sum = 0;
+        for(int q = 0; q < 3; q++){
+          for(int r = 0; r < 3; r++){
+            sum += ds_dG(q,r) * dGdF(q,r);
+          }
+        }
+        A[j](k,m) += sum;
 			}
 		}
 	} 

@@ -30,11 +30,11 @@ class ElasticPrimState
 		double S_() const;
 
     //setters
-    void u(const Eigen::Vector3d&) const;
+    void u(const Eigen::Vector3d&);
 
-    void F(const Eigen::Matrix3d&) const;
+    void F(const Eigen::Matrix3d&);
 
-    void S(const double&) const;
+    void S(const double&);
 
 		Eigen::VectorXd getStateVector() const {return v;};
 	

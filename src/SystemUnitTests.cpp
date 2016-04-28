@@ -12,7 +12,10 @@ void check_dsigma_dG(ElasticPrimState pL, System sys, ElasticEOS eos);
 void check_dsigma_deps(ElasticPrimState prim, System sys);
 void check_B(ElasticPrimState prim, System sys, ElasticEOS eos);
 void construct_Eigenvectors(System sys, ElasticPrimState pW, ElasticEOS eos);
+void construct_Eigenvectors_A(System sys, ElasticPrimState pW, ElasticEOS eos);
 
+using namespace Eigen;
+using namespace std;
 
 int main(void) 
 {
@@ -51,11 +54,169 @@ int main(void)
   /* check_B(pW, sys, eos); */
   // therefore Q-1 = V 
   //construct eigenvectors
-  construct_Eigenvectors(sys, pW, eos);
+  construct_Eigenvectors_A(sys, pW, eos);
 
   //we can also do tests of the eigendecomposition
 
   //also experiment with single iteration, is this more efficient?
+}
+
+//this is a test to sort objects  using the std::sort algorithm
+//need to create objects of type eigen containing value and vector pairs
+//
+struct eigen { 
+  int value;
+  vector<double> eigenvec;
+
+  //default constructor
+  eigen(){}
+
+  eigen(const int val, vector<double> vec){
+    value = val;
+    eigenvec = vec;
+  }
+
+  //descending order 
+  bool operator>(eigen const &other) const { 
+    return value > other.value;
+  }
+
+  //ascending order 
+  bool operator<(eigen const &other) const { 
+    return value < other.value;
+  }
+};
+
+void construct_Eigenvectors_A(System sys, ElasticPrimState pW, ElasticEOS eos)
+{
+  // construct curly A then decompose
+  int dirn = 0;
+  const Eigen::Matrix3d F = pW.F_();
+  const Eigen::Matrix3d FT = pW.F_().transpose();
+	const Eigen::Matrix3d G = sys.strainTensor(F);
+	const Eigen::Vector3d Inv = sys.getInvariants(F);
+  SquareTensor3 dstressdF = sys.dstress_dF(pW, G, Inv);
+
+   
+   
+
+  //construct curly A
+  //is it possible to eigendecompose a typedef?
+  //has to be an eigen type to perform the decomposition 
+ 
+  /* typedef Eigen::Matrix<double, 13, 13> Matrix13d; //each row corresponds to eigenvector */
+  
+  Eigen::Matrix3d zero = Eigen::Matrix3d::Zero();
+  Eigen::Vector3d zeroV = Eigen::Vector3d::Zero();
+  
+  double rho = sys.Density(pW);
+  Eigen::Matrix3d A_11 = dstressdF[0];
+  Eigen::Matrix3d A_12 = dstressdF[1];
+  Eigen::Matrix3d A_13 = dstressdF[2];
+
+  cout << "\ndstressdF\n" << dstressdF << endl;
+  Eigen::Matrix3d I = Eigen::Matrix3d::Identity();
+  
+  double u1 = pW.u_()(0);
+
+  const Eigen::Matrix3d m2rho = -2.*rho*G;
+  const SquareTensor3 dsdeps = m2rho * pW.dI_dG(G,Inv); //cannot remember this derivation?
+  Eigen::Matrix3d dsdeps_ = dsdeps[2];
+  //might be worth creating this function in system
+  Eigen::Matrix3d dsdS = eos.depsi_dI_dS(Inv, pW.S_())[2] * dsdeps_; //only non-zero component
+  Eigen::Vector3d B;
+  for(int i = 0; i < 3; i++) {
+    B[i] = dsdS(0, i); 
+  }
+  B *= 1./rho;
+
+  cout << "B\n" << endl;
+  cout << B << endl;
+
+
+  Eigen::Matrix3d E1 = I.col(dirn)*I.row(0);
+  Eigen::Matrix3d E2 = I.col(dirn)*I.row(1);
+  Eigen::Matrix3d E3 = I.col(dirn)*I.row(2);
+
+  Eigen::MatrixXd AM(13,13);
+  AM << u1*I, -(1./rho)*A_11, -(1./rho)*A_12, -(1./rho)*A_13, -B,
+    -1.*FT*E1, u1*I, zero, zero, zero.col(0),
+    -1.*FT*E2, zero, u1*I, zero, zero.col(0),
+    -1.*FT*E3, zero, zero, u1*I, zero.col(0),
+    zero.row(0), zero.row(0), zero.row(0), zero.row(0), u1;
+
+  cout << "Curly A\n" << AM << endl;
+
+  /* std::cout << testMat << std::endl; */
+  Eigen::EigenSolver<Eigen::MatrixXd> es(AM);
+  /* cout << es.eigenvectors().col(0).norm(); */
+  cout << "\nDensity " << rho << "\n" << endl;
+  /* cout << es.eigenvectors() << endl; */
+  MatrixXd V = es.eigenvectors().real();
+  MatrixXd D = es.eigenvalues().real().asDiagonal();
+
+  /* cout << "\nEigenvalues\n" << D << endl; */
+  /* /1* std::cout.precision(4); *1/ */ 
+  /* vector<eigen> vec(13); */
+
+  /* for(int i = 0; i < 13; i++){ */
+  /*   vector<double> temp(13); */
+  /*   for(int j = 0; j < 13; j++) */
+  /*   { */
+  /*     /1* output << V(j,i) << "\t"; *1/ */
+  /*     temp[j] = V(j,i); */ 
+  /*   } */
+  /*   eigen etemp(D(i,i), temp); */ 
+  /*   vec[i] = etemp; */
+  /*   /1* output << endl; *1/ */
+  /* } */
+
+  /* VectorXd eigs = es.eigenvalues().real(); */ 
+  /* std::cout << eigs << endl; */
+
+  /* //order descendingly */
+  /* std::sort(vec.begin(), vec.end(),less<eigen>()); //greater */
+  /* for(int i = 0; i < vec.size(); i++) */
+  /* { */
+  /*   std::cout << vec[i].value << endl; */
+  /* } */
+
+  /* string file = "/home/raid/ma595/solid-1D/eigenvectors.out"; */
+
+  /* ofstream output; */	
+  /* output.open(file.c_str(), ofstream::app); //we append all results to the same file */ 
+  /* output << "Right eigenvectors " << endl; */ 
+  /* for(int i = 0; i < 13; i++){ */
+  /*   vector<double> eigvectemp = vec[i].eigenvec; */
+  /*   for(int j = 0; j < 13; j++) */
+  /*   { */
+  /*     output << eigvectemp[j] << "\t"; */ 
+  /*   } */
+  /*   output << "\n"; */
+  /* } */
+
+  /* output.close(); */
+
+  /* cout << eos.depsi_dI_dS(Inv, pW.S_()) << endl; */
+  /* cout << (1./rho) * dsdS << endl; */
+  /* for(int i = 0; i < 13; i++) */
+  /*   cout << "Length " << V.col(i).norm() << endl; */
+
+  /* cout << "Reconstruct A from eigenvectors" << endl; */
+  /* MatrixXd Arecon = V * D * V.inverse(); */
+  /* cout << (Arecon - AM) << endl; */
+  
+
+  /* Eigen::MatrixXd eigs = es.eigenvectors(); */
+  /* std::cout << "\n" << V << "\n" << std::endl; */
+  /* std::cout << eigs << std::endl; */
+
+  /* Eigen::MatrixXd A = MatrixXd::Random(6,6); */
+  /* cout << "Here is a random 6x6 matrix, A:" << endl << A << endl << endl; */
+  /* EigenSolver<Eigen::MatrixXd> eis(A); */
+  /* cout << "The eigenvalues of A are:" << endl << eis.eigenvalues() << endl; */
+  /* cout << "The matrix of eigenvectors, V, is:" << endl << eis.eigenvectors() << endl << endl; */
+  
 }
 
 void construct_Eigenvectors(System sys, ElasticPrimState pW, ElasticEOS eos)
@@ -64,6 +225,7 @@ void construct_Eigenvectors(System sys, ElasticPrimState pW, ElasticEOS eos)
   int dirn = 0;
   /* Eigen::MatrixXcd Q = es.eigenvectors(); */
   Eigen::Matrix3d omega = sys.AcousticTensor(pW);
+  std::cout << "acoustic tensor\n" << omega << std::endl;
   Eigen::EigenSolver<Eigen::Matrix3d> es(omega);
   Eigen::Matrix3d V = es.pseudoEigenvectors();
   Eigen::Matrix3d eigs = es.pseudoEigenvalueMatrix();
@@ -72,13 +234,15 @@ void construct_Eigenvectors(System sys, ElasticPrimState pW, ElasticEOS eos)
   //Q-1 = V
   //L = D^2
   Eigen::Matrix3d D;
+  Eigen::Matrix3d Dinv = D.inverse();
   /* std::cout << L << std::endl; */
   D(0,0) = pow(eigs(0,0),0.5);
   D(1,1) = pow(eigs(1,1),0.5);
   D(2,2) = pow(eigs(2,2),0.5);
+  std::cout << " D " << D << "\n" << std::endl;
   Eigen::Matrix3d Q = V.inverse();
   Eigen::Matrix3d Qinv = V;
-  /* std::cout << D << std::endl; */
+  std::cout << "Qinv\n " << Qinv << "\n " << std::endl;
  
   Eigen::Matrix3d perm = Eigen::Matrix3d::Zero();
   //permutation matrix
@@ -92,8 +256,10 @@ void construct_Eigenvectors(System sys, ElasticPrimState pW, ElasticEOS eos)
 	const Eigen::Vector3d I = sys.getInvariants(F);
   double rho = sys.Density(pW);
   const Eigen::Matrix3d m2rho = -2.*rho*G;
+  
 	const SquareTensor3 dsdeps = m2rho * pW.dI_dG(G,I); //cannot remember this derivation?
   Eigen::Matrix3d dsdeps_ = dsdeps[2];
+  //might be worth creating this function in system
   Eigen::Matrix3d dsdS = eos.depsi_dI_dS(I, pW.S_())[2] * dsdeps_; //only non-zero component
   Eigen::Vector3d B;
   for(int i = 0; i < 3; i++) {
@@ -102,6 +268,7 @@ void construct_Eigenvectors(System sys, ElasticPrimState pW, ElasticEOS eos)
   B *= 1./rho;
   
   SquareTensor3 dstressdF = sys.dstress_dF(pW, G, I);
+  std::cout << dstressdF << std::endl;
   Eigen::Matrix3d DQ = D*Q;
   Eigen::Matrix3d QA_11 = Q*dstressdF[0];
   Eigen::Matrix3d QA_12 = Q*dstressdF[1];
@@ -109,10 +276,152 @@ void construct_Eigenvectors(System sys, ElasticPrimState pW, ElasticEOS eos)
   Eigen::Vector3d QB1 = Q*B;
   //the first row is B when dir = 0, self explanatory
  
-  Eigen::Matrix3d mpiQA_11 = -perm*QA_11;
-  Eigen::Matrix3d mpiQA_12 = -perm*QA_12;
-  Eigen::Matrix3d mpiQA_13 = -perm*QA_13;
-  Eigen::Vector3d mpiQB1 = -perm*QB1;
+  /* Eigen::Matrix3d mpiQA_11 = -perm*QA_11; */
+  /* Eigen::Matrix3d mpiQA_12 = -perm*QA_12; */
+  /* Eigen::Matrix3d mpiQA_13 = -perm*QA_13; */
+  /* Eigen::Vector3d mpiQB1 = -perm*QB1; */
+
+  /* ElasticPrimState primTest(pW.u_(), pW.F_(), pW.S_()); */
+  /* std::cout << primTest << std::endl; */
+  /* Eigen::Vector3d v(1,2,3); */
+  /* primTest.u(v); */
+  /* std::cout << primTest << std::endl; */
+  /* Eigen::Matrix3d matTest = Eigen::Matrix3d::Ones(); */
+  /* primTest.F(matTest); */
+  /* std::cout << primTest << std::endl; */
+  
+  typedef Eigen::Matrix<ElasticPrimState, 13, 1> Vector13Prim; //each row corresponds to eigenvector
+  
+  Vector13Prim Le, Re;// initialise with zero components 
+  ElasticPrimState la, law;
+  Eigen::Matrix3d zero = Eigen::Matrix3d::Zero();
+
+  // it does make sense to wrap in elasticPrimState
+  // a and aw = acoustic 
+  // d and dp are linearly degenerate 
+
+  int w, wr;
+  for(w = 0; w < 3; w++)
+  {
+    wr = 12-w;
+
+    Eigen::Matrix3d tl = zero; 
+    tl << QA_11.row(w), QA_12.row(w), QA_13.row(w);
+
+    la.u(DQ.row(w));
+    la.F(tl);
+    la.S(Q(w));
+    Le(w) = la;
+
+    law.u(DQ.row(w));
+    law.F(-tl);
+    law.S(Q(w));
+    Le(wr) = law;   
+  }
+
+  w = 3;
+  int pS = w;
+  for(int i = 0; i < 3; i++)
+  {
+    ElasticPrimState ld, ldp;
+    ld[pS] = F(0,1)/F(0,0);
+    ld[pS+1] = -1;
+    ldp[pS] = F(0,2)/F(0,0); 
+    ldp[pS+2] = -1;
+    pS+=3;
+    Le(w) = ld;
+    Le(w+1) = ldp;
+    w+=2;
+  }
+
+  //and linearly degenerate left eigenvectors
+
+ 
+  //Right eigenvectors 
+  //acoustic eigenvectors
+  Eigen::Matrix3d QinvDinv = Qinv*Dinv;
+  Eigen::Matrix3d QinvDinvT = (Qinv*Dinv).transpose();
+  Eigen::Matrix3d QinvDinv2 = QinvDinv*Dinv;
+  /* Eigen::Matrix3d QinvDinv2 = (Qinv*Dinv*Dinv).transpose(); */
+  Eigen::Matrix3d FT = F.transpose();
+  std::cout << "Right eigenvectors " << std::endl;
+  
+  for(w = 0; w < 3; w++)
+  {
+    wr = 12-w;
+    ElasticPrimState ra, raw;
+    //velocity components
+    ra.u(QinvDinvT.row(w));
+    raw.u(QinvDinvT.row(w));
+
+    ra.F(QinvDinv2.col(w)*F.row(dirn));
+    raw.F(-1.0*QinvDinv2.col(w)*F.row(dirn));
+
+    //entropy part
+    ra.S(0);
+    raw.S(0);
+
+    Re[w] = 0.5*ra;
+    Re[wr] = 0.5*raw;
+  }
+
+  //indices 3 to 8
+  //shear components
+  Eigen::Matrix3d ominv = omega.inverse();
+  //may be possible to vectorise this 
+  Eigen::Matrix3d ominvA11 = ominv*dstressdF[0];
+  Eigen::Matrix3d ominvA12 = ominv*dstressdF[1];
+  Eigen::Matrix3d ominvA13 = ominv*dstressdF[2];
+  typedef Eigen::Matrix<Eigen::Matrix3d, 3, 1> Vector3M; //each row corresponds to eigenvector
+  Vector3M ominvA(ominvA11, ominvA12, ominvA13);
+  Eigen::Vector3d zeroV(0,0,0);
+  int s = 3;// these are the Re indices
+  int sw = s++;
+
+  for(int i = 0; i < 3; i++)
+  {
+    ElasticPrimState rs, rsw;
+    rs.u(zeroV);
+    rsw.u(zeroV);
+
+    Eigen::Matrix3d Fs = ominvA[i].col(1)*F.row(dirn);
+    rs.F(Fs);
+    Fs(i,1) -= 1.;
+    Eigen::Matrix3d Fsw = ominvA[i].col(1)*F.row(dirn);
+    Fsw(i,2) -= 1.;
+    rsw.F(Fsw);
+    //need to subtract t
+ 
+    rs.S(0);
+    rsw.S(0);
+
+    Re[s] = rs;
+    Re[sw] = rsw;
+
+    s++;
+    sw++;
+  }
+
+  //linearly degenerate eigenvector
+  ElasticPrimState rd;
+  Eigen::Vector3d ominvB = ominv * B;
+  Eigen::Matrix3d FominvB = ominvB * F.row(dirn);
+  rd.u(zeroV);
+  rd.F(FominvB);
+  rd.S(-1.0);
+  Re[9] = rd;
+
+  for(int i = 0; i < Le.size(); i++)
+    std::cout << Le[i] << std::endl;
+
+  std::cout << D << std::endl;
+
+
+
+
+  //check against kevin.
+
+
   //representation of unit dyads 
   //
   //
@@ -122,31 +431,27 @@ void construct_Eigenvectors(System sys, ElasticPrimState pW, ElasticEOS eos)
   //This is quite cool: specify compile time sizes
   //do these need to be know at compile time?
   //we can make our own tinyvector this way
-  typedef Eigen::Matrix<double, 13, 1> Vector13d; //each row corresponds to eigenvector
-  Vector13d testtype = Vector13d::Zero();
+  /* Vector13d testtype = Vector13d::Zero(); */
   //may need to change this representation: think of Leveque's linearised Riemann solver
  
-  typedef Eigen::Matrix<Vector13d, 13, 1> Vector13V;
-  Vector13V L, R;
+  /* typedef Eigen::Matrix<Vector13d, 13, 1> Vector13V; */
+  /* Vector13V L, R; */
   /* L[0] = Vector13d::Ones(); */
   /* L[1] = Vector13d::Ones()*4; */
   /* std::cout << L[0].dot(L[1]) << std::endl; */
   /* //we can also get row vector and column vector using row and col functions */
   /* //we can also concatenate vectors using this approach */
-  Eigen::Vector3d zeros = Eigen::Vector3d::Zero();
-  Eigen::Vector3d testV1 = Eigen::Vector3d::Ones()*2;
-  Eigen::Vector3d testV2 = Eigen::Vector3d::Ones()*3;
-  Eigen::Matrix3d onesM = Eigen::Matrix3d::Ones();
+  /* Eigen::Vector3d zeros = Eigen::Vector3d::Zero(); */
+  /* Eigen::Vector3d testV1 = Eigen::Vector3d::Ones()*2; */
+  /* Eigen::Vector3d testV2 = Eigen::Vector3d::Ones()*3; */
+  /* Eigen::Matrix3d onesM = Eigen::Matrix3d::Ones(); */
 
   //could either use eigen or ElasticPrimState.
   //Eigen does give some flexibility
 
-  for(int i = 0; i < 3; i++)
-  {
-    L(i) << onesM<Vector3d>.row(i), onesM.row(i), onesM.row(i), onesM.row(i), 0;
     /* L(i) << DQ.row(i), QA_11.row(i), QA_12.row(i), QA_13.row(i), 0; */
     /* L[12-i] << DQ.row(i), -QA_11.row(i), -QA_12.row(i), -QA_13.row(i), QB1(i); */
-  }
+  /* } */
 
 
   /* L.transpose(); */
