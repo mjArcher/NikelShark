@@ -1,5 +1,6 @@
 #include "SolidSystem.h"
 #include <vector> 
+#include <iomanip>
 
 //equation of state and system tests
 
@@ -12,7 +13,46 @@ void check_dsigma_dG(ElasticPrimState pL, System sys, ElasticEOS eos);
 void check_dsigma_deps(ElasticPrimState prim, System sys);
 void check_B(ElasticPrimState prim, System sys, ElasticEOS eos);
 void construct_Eigenvectors(System sys, ElasticPrimState pW, ElasticEOS eos);
-void construct_Eigenvectors_A(System sys, ElasticPrimState pW, ElasticEOS eos);
+double dot(ElasticPrimState state1, ElasticPrimState state2);
+
+typedef Eigen::Matrix<double, 13, 1> Vector13d;
+
+struct eigen { 
+  int lambda;
+  ElasticPrimState eigenvecR;
+  ElasticPrimState eigenvecL;
+  //default constructor
+  eigen(){}
+
+  eigen(const int val, Vector13d vecL, Vector13d vecR){
+    lambda = val;
+    eigenvecL = convert(vecL);
+    eigenvecR = convert(vecR); //normalised 
+  }
+
+  ElasticPrimState convert(Vector13d vecR)
+  {
+    ElasticPrimState temp;
+    for(int i = 0; i < 13; i++)
+    {
+      temp[i] = vecR[i];
+    }
+    return temp;
+  }
+
+  //descending order 
+  bool operator>(eigen const &other) const { 
+    return lambda > other.lambda;
+  }
+
+  //ascending order 
+  bool operator<(eigen const &other) const { 
+    return lambda < other.lambda;
+  }
+};
+
+void godunovState(System sys, ElasticPrimState pL, ElasticPrimState pR, ElasticEOS eos, std::ofstream&, std::vector<eigen>);
+std::vector<eigen> construct_Eigenvectors_A(System sys, ElasticPrimState pL, ElasticPrimState pW, ElasticEOS eos);
 
 using namespace Eigen;
 using namespace std;
@@ -24,7 +64,7 @@ int main(void)
 	double SL, SR;
 
 	FL <<	 0.98, 0, 0, 0.02, 1, 0.1, 0, 0, 1;
-	uL << 0, 0.5, 1;
+	uL << 0, 500, 1000;
 	SL = 1000;
 
 	FR << 1., 0, 0, 0, 1., 0.1, 0, 0, 1.;
@@ -54,7 +94,7 @@ int main(void)
   /* check_B(pW, sys, eos); */
   // therefore Q-1 = V 
   //construct eigenvectors
-  construct_Eigenvectors_A(sys, pW, eos);
+  vector<eigen> egs = construct_Eigenvectors_A(sys, primStateL, primStateR, eos);
 
   //we can also do tests of the eigendecomposition
 
@@ -63,43 +103,51 @@ int main(void)
 
 //this is a test to sort objects  using the std::sort algorithm
 //need to create objects of type eigen containing value and vector pairs
-//
-struct eigen { 
-  int value;
-  vector<double> eigenvec;
-
-  //default constructor
-  eigen(){}
-
-  eigen(const int val, vector<double> vec){
-    value = val;
-    eigenvec = vec;
+void godunovState(System sys, ElasticPrimState pL, ElasticPrimState pR, ElasticEOS eos, ofstream& output, vector<eigen> eigs)
+{
+  /* vector<eigen> eigs = construct_Eigenvectors_A(sys, pL, pR, eos); */ 
+  const ElasticPrimState dp = pR - pL;
+  cout << "Delta p " << dp << endl;
+  ElasticPrimState god = pL;
+  for(int w=0; w<13; ++w) {
+    if(eigs[w].lambda <0.0) {
+      const double strength = dot(eigs[w].eigenvecL, dp);
+      if(strength!=0.0) 
+        god+=strength*eigs[w].eigenvecR;
+    }
   }
 
-  //descending order 
-  bool operator>(eigen const &other) const { 
-    return value > other.value;
-  }
+  /* output.precision(10); */ 
+  output << god << setprecision(5);
 
-  //ascending order 
-  bool operator<(eigen const &other) const { 
-    return value < other.value;
-  }
-};
 
-void construct_Eigenvectors_A(System sys, ElasticPrimState pW, ElasticEOS eos)
+  /* std::cout << "Godunov state \n" << god << std::endl; */
+  /* std::cout << "pL state \n" << pL << std::endl; */
+  /* std::cout << "pR state \n" << pR << std::endl; */
+
+}
+
+double dot(ElasticPrimState state1, ElasticPrimState state2)
+{
+  double temp = 0;
+  for(int i = 0; i < 13; i++)
+  {
+    temp += state1[i]*state2[i]; 
+  }
+  return temp;
+}
+
+vector<eigen> construct_Eigenvectors_A(System sys, ElasticPrimState pL, ElasticPrimState pR, ElasticEOS eos)
 {
   // construct curly A then decompose
+  ElasticPrimState pW = 0.5*(pL + pR);
   int dirn = 0;
   const Eigen::Matrix3d F = pW.F_();
   const Eigen::Matrix3d FT = pW.F_().transpose();
 	const Eigen::Matrix3d G = sys.strainTensor(F);
 	const Eigen::Vector3d Inv = sys.getInvariants(F);
   SquareTensor3 dstressdF = sys.dstress_dF(pW, G, Inv);
-
-   
-   
-
+  
   //construct curly A
   //is it possible to eigendecompose a typedef?
   //has to be an eigen type to perform the decomposition 
@@ -133,7 +181,6 @@ void construct_Eigenvectors_A(System sys, ElasticPrimState pW, ElasticEOS eos)
   cout << "B\n" << endl;
   cout << B << endl;
 
-
   Eigen::Matrix3d E1 = I.col(dirn)*I.row(0);
   Eigen::Matrix3d E2 = I.col(dirn)*I.row(1);
   Eigen::Matrix3d E3 = I.col(dirn)*I.row(2);
@@ -145,60 +192,125 @@ void construct_Eigenvectors_A(System sys, ElasticPrimState pW, ElasticEOS eos)
     -1.*FT*E3, zero, zero, u1*I, zero.col(0),
     zero.row(0), zero.row(0), zero.row(0), zero.row(0), u1;
 
-  cout << "Curly A\n" << AM << endl;
-
-  /* std::cout << testMat << std::endl; */
   Eigen::EigenSolver<Eigen::MatrixXd> es(AM);
-  /* cout << es.eigenvectors().col(0).norm(); */
-  cout << "\nDensity " << rho << "\n" << endl;
-  /* cout << es.eigenvectors() << endl; */
-  MatrixXd V = es.eigenvectors().real();
+  cout << es.eigenvectors().col(0).norm();
+  MatrixXd Re = es.eigenvectors().real();
+  MatrixXd Le = es.eigenvectors().real().inverse();
   MatrixXd D = es.eigenvalues().real().asDiagonal();
 
-  /* cout << "\nEigenvalues\n" << D << endl; */
-  /* /1* std::cout.precision(4); *1/ */ 
-  /* vector<eigen> vec(13); */
+  cout << "\nEigenvalues\n" << D << endl;
+  /* std::cout.precision(4); */ 
+  vector<eigen> vecEig(13);
+  /* typedef Eigen::Matrix<ElasticPrimState, 13, 1> Vector13Prim; //each row corresponds to eigenvector */
 
+  for(int i = 0; i < 13; i++){
+    Vector13d tempR;
+    Vector13d tempL;
+    for(int j = 0; j < 13; j++)
+    {
+      /* output << V(j,i) << "\t"; */
+      tempR[j] = Re(j,i); 
+      tempL[j] = Le(i,j); 
+    }
+
+    /* cout << temp.norm() << endl; */
+    /* if(abs(D(i,i)) != 0) */
+    /*   tempR /= D(i,i); */
+    /* tempR /= 2.; */
+
+    eigen etemp(D(i,i), tempL, tempR); 
+    vecEig[i] = etemp;
+  }
+
+  VectorXd eigs = es.eigenvalues().real(); 
+  std::cout << eigs << endl;
+
+  //order descendingly
+  
+  std::sort(vecEig.begin(), vecEig.end(),less<eigen>()); //greater
+  for(int i = 0; i < vecEig.size(); i++)
+  {
+    std::cout << vecEig[i].lambda << endl;
+  }
+
+
+  string file = "/home/raid/ma595/solid-1D/eigenvectors.out";
+
+  ofstream output;	
+  output.open(file.c_str(), ofstream::app); //we append all results to the same file 
+  output << "\nRight eigenvectors\n" << endl; 
+  for(int i = 0; i < 13; i++)
+  {
+    ElasticPrimState eigvectemp = vecEig[i].eigenvecR;
+    for(int j = 0; j < 13; j++)
+    {
+      output << eigvectemp[j] << "\t"; 
+    }
+    output << "\n";
+  }
+
+  //////////////////////////////////
+
+  vector<double> sqsums(13);
+  output << "\nLeft eigenvectors normalised\n" << endl; 
+  for(int i = 0; i < 13; i++)
+  {
+    double sqsum = 0;
+    ElasticPrimState eigvectemp = vecEig[i].eigenvecL;
+    for(int j = 0; j < 13; j++)
+    {
+      output << eigvectemp[j] << "\t"; 
+      sqsum += pow(eigvectemp[j], 2.);
+    }
+    sqsums[i] = pow(sqsum, 0.5);
+    output << "\n";
+  }
+  output << "\n";
+
+  for(int i = 0; i < 13; i++)
+  {
+    double sqsum = 0;
+    ElasticPrimState eigvectemp = vecEig[i].eigenvecL;
+    for(int j = 0; j < 13; j++)
+    {
+      output << eigvectemp[j]/sqsums[i] << "\t"; 
+    }
+    output << "\n";
+  }
+
+
+  for(int i = 0; i < 13; i++)
+  {
+    output << vecEig[i].lambda << endl;
+  }
+
+  godunovState(sys, pL, pR, eos, output, vecEig);
+  output.close();
+  //compute godunov state here
+  return vecEig;
+
+  //these tests pass
+  /* cout << Re*Le << endl; */
+  /* cout << Le*Re << endl; */
+
+  //as do these:
   /* for(int i = 0; i < 13; i++){ */
-  /*   vector<double> temp(13); */
+  /*   Vector13d vecEigL = vecEig[i].eigenvecL; */
+  /*   Vector13d vecEigR = vecEig[i].eigenvecR; */
+  /*   double val = 0; */
   /*   for(int j = 0; j < 13; j++) */
   /*   { */
-  /*     /1* output << V(j,i) << "\t"; *1/ */
-  /*     temp[j] = V(j,i); */ 
+  /*     val += vecEigL[j]*vecEigR[j]; */ 
   /*   } */
-  /*   eigen etemp(D(i,i), temp); */ 
-  /*   vec[i] = etemp; */
-  /*   /1* output << endl; *1/ */
+  /*   cout << val << endl; */
   /* } */
-
-  /* VectorXd eigs = es.eigenvalues().real(); */ 
-  /* std::cout << eigs << endl; */
-
-  /* //order descendingly */
-  /* std::sort(vec.begin(), vec.end(),less<eigen>()); //greater */
-  /* for(int i = 0; i < vec.size(); i++) */
-  /* { */
-  /*   std::cout << vec[i].value << endl; */
-  /* } */
-
-  /* string file = "/home/raid/ma595/solid-1D/eigenvectors.out"; */
-
-  /* ofstream output; */	
-  /* output.open(file.c_str(), ofstream::app); //we append all results to the same file */ 
-  /* output << "Right eigenvectors " << endl; */ 
-  /* for(int i = 0; i < 13; i++){ */
-  /*   vector<double> eigvectemp = vec[i].eigenvec; */
-  /*   for(int j = 0; j < 13; j++) */
-  /*   { */
-  /*     output << eigvectemp[j] << "\t"; */ 
-  /*   } */
-  /*   output << "\n"; */
-  /* } */
-
-  /* output.close(); */
 
   /* cout << eos.depsi_dI_dS(Inv, pW.S_()) << endl; */
   /* cout << (1./rho) * dsdS << endl; */
+
+
+  
+
   /* for(int i = 0; i < 13; i++) */
   /*   cout << "Length " << V.col(i).norm() << endl; */
 

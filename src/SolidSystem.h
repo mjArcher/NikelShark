@@ -71,10 +71,17 @@ class System {
 
     ElasticState godunovFlux(const ElasticState& qL, const ElasticState& qR) const;
 
+    
+    Eigen::Vector3d B(const ElasticPrimState&) const;
+
+    Eigen::VectorXd stateEigenDecompose_A(const ElasticPrimState& pW, const int dirn, std::vector<ElasticPrimState>& Le, std::vector<ElasticPrimState>& Re) const;
+
     //move this back
 		SquareTensor3 dstress_dF(const ElasticPrimState&, const Eigen::Matrix3d& G, const Eigen::Vector3d& inv) const;
 
 		std::vector<Eigen::Matrix3d> dep_dF(const SquareTensor3, const Eigen::Matrix3d) const;
+
+    
 
   private:
 

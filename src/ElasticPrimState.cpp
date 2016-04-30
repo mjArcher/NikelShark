@@ -65,7 +65,7 @@ double ElasticPrimState::S_() const
 
 std::ostream& operator<<(std::ostream& os, const ElasticPrimState& param)
 {
-	os.precision(4);
+  os.precision(7);
 	Vector3d u = param.u_();
 	Matrix3d Fe = param.F_();
 	double S = param.S_();
