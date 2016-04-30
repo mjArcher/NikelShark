@@ -209,11 +209,11 @@ Matrix3d ElasticPrimState::dsigma_dG(int k, const Vector3d& de_dI, const Matrix3
 
 		ds_dG(1,1) = -(G(0,0)*de_dI[1]+(-G(0,2)*G(2,0) + G(0,0)*G(2,2))*de_dI[2]);
 
-		ds_dG(1,2) = -G(0,1)*G(2,0) + G(0,0)*G(2,1)*de_dI[2];
+		ds_dG(1,2) = -(G(0,1)*G(2,0) - G(0,0)*G(2,1))*de_dI[2];
 
 		ds_dG(2,0) = G(0,2)*de_dI[1]-(-G(0,2)*G(1,1) + G(0,1)*G(1,2))*de_dI[2];
 
-		ds_dG(2,1) = -G(0,2)*G(1,0) + G(0,0)*G(1,2)*de_dI[2];
+		ds_dG(2,1) = -(G(0,2)*G(1,0) - G(0,0)*G(1,2))*de_dI[2];
 
 		ds_dG(2,2) = -(G(0,0)*de_dI[1]+(-G(0,1)*G(1,0) + G(0,0)*G(1,1))*de_dI[2]);
 	}

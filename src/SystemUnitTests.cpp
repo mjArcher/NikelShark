@@ -9,7 +9,7 @@ void check_depsi_dI_dI(ElasticPrimState pri, System sys, ElasticEOS eos);
 void check_depsi_dI_dS(ElasticPrimState pri, System sys, ElasticEOS eos);
 void check_deps_dF(ElasticPrimState pri, System sys, ElasticEOS eos);
 void check_drho_dF(ElasticPrimState, System sys);
-void check_dsigma_dG(ElasticPrimState pL, System sys, ElasticEOS eos);
+void check_dsigma_dG(ElasticPrimState pL, System sys, ElasticEOS eos, std::ofstream&);
 void check_dsigma_deps(ElasticPrimState prim, System sys);
 void check_B(ElasticPrimState prim, System sys, ElasticEOS eos);
 void construct_Eigenvectors(System sys, ElasticPrimState pW, ElasticEOS eos);
@@ -18,13 +18,14 @@ double dot(ElasticPrimState state1, ElasticPrimState state2);
 typedef Eigen::Matrix<double, 13, 1> Vector13d;
 
 struct eigen { 
-  int lambda;
+  double lambda;
   ElasticPrimState eigenvecR;
   ElasticPrimState eigenvecL;
+  
   //default constructor
   eigen(){}
 
-  eigen(const int val, Vector13d vecL, Vector13d vecR){
+  eigen(const double val, Vector13d vecL, Vector13d vecR){
     lambda = val;
     eigenvecL = convert(vecL);
     eigenvecR = convert(vecR); //normalised 
@@ -51,7 +52,7 @@ struct eigen {
   }
 };
 
-void godunovState(System sys, ElasticPrimState pL, ElasticPrimState pR, ElasticEOS eos, std::ofstream&, std::vector<eigen>);
+void godunovState(System sys, ElasticPrimState pL, ElasticPrimState pR, ElasticEOS eos, std::vector<eigen>);
 std::vector<eigen> construct_Eigenvectors_A(System sys, ElasticPrimState pL, ElasticPrimState pW, ElasticEOS eos);
 
 using namespace Eigen;
@@ -63,12 +64,18 @@ int main(void)
   Eigen::Vector3d uL, uR;
 	double SL, SR;
 
-	FL <<	 0.98, 0, 0, 0.02, 1, 0.1, 0, 0, 1;
-	uL << 0, 500, 1000;
+  /* const ElasticPrimState priL(SquareMatrix(),DV3(5,500,1000),1000,0); */        
+
+	FL <<	0.98,0.1,0.15,0.02,1.1,0.1,0.15,0.015,1.2;
+	uL << 50., 500., 1000.;
 	SL = 1000;
 
-	FR << 1., 0, 0, 0, 1., 0.1, 0, 0, 1.;
+	/* FL <<	 0.98, 0, 0, 0.02, 1, 0.1, 0, 0, 1; */
+	/* uL << 0, 500, 1000; */
+	/* SL = 1000; */
+
 	uR << 0, 0, 0;
+	FR << 1., 0, 0, 0, 1., 0.1, 0, 0, 1.;
 	SR = 0.;
 
   ElasticPrimState primStateL(uL, FL, SL);  
@@ -80,22 +87,34 @@ int main(void)
   //std::cout << "Check that conversion works" << std::endl;
   assert(primStateL==primStateCheck);
   assert(primStateR!=primStateCheck);
-  std::cout << "\nPRIMSTATE CHECK PASSED" << std::endl;
-  //use left and right states: obtain godunov state.
-  //check that acoustic tensor is correct.
-  //compute strain tensor and invariants:
+  /* std::cout << "\nPRIMSTATE CHECK PASSED" << std::endl; */
   std::cout.precision(10); 
   ElasticPrimState pW = 0.5*(primStateL + primStateR);
+  
 	const Eigen::Matrix3d G = sys.strainTensor(pW.F_());
 	const Eigen::Vector3d I = sys.getInvariants(pW.F_());
-
   SquareTensor3 dstressdF = sys.dstress_dF(pW, G, I);
+  
   /* std::cout << dstressdF << std::endl; */
   /* check_B(pW, sys, eos); */
   // therefore Q-1 = V 
   //construct eigenvectors
   vector<eigen> egs = construct_Eigenvectors_A(sys, primStateL, primStateR, eos);
 
+  string file1 = "/home/raid/ma595/solid-1D/dstress_dFTest.out";
+  ofstream dsdFout;	
+  dsdFout.open(file1.c_str(),ofstream::app);
+
+
+  dsdFout << "Matt's\ndstressdF\n " << dstressdF[0] << endl;
+  dsdFout << "\n " << dstressdF[1] << endl;
+  dsdFout << "\n " << dstressdF[2] << "\n" << endl;
+
+  check_dsigma_dG(pW, sys, eos, dsdFout);
+  dsdFout << "G\n" << G << endl;
+	const Eigen::Vector3d de_dI = eos.depsi_dI(I, pW.S_());
+  dsdFout << "de_dI\n" << de_dI << endl;
+  dsdFout.close();
   //we can also do tests of the eigendecomposition
 
   //also experiment with single iteration, is this more efficient?
@@ -103,23 +122,29 @@ int main(void)
 
 //this is a test to sort objects  using the std::sort algorithm
 //need to create objects of type eigen containing value and vector pairs
-void godunovState(System sys, ElasticPrimState pL, ElasticPrimState pR, ElasticEOS eos, ofstream& output, vector<eigen> eigs)
+void godunovState(System sys, ElasticPrimState pL, ElasticPrimState pR, ElasticEOS eos, vector<eigen> eigs)
 {
   /* vector<eigen> eigs = construct_Eigenvectors_A(sys, pL, pR, eos); */ 
   const ElasticPrimState dp = pR - pL;
-  cout << "Delta p " << dp << endl;
   ElasticPrimState god = pL;
   for(int w=0; w<13; ++w) {
     if(eigs[w].lambda <0.0) {
+      cout << eigs[w].lambda << endl;
       const double strength = dot(eigs[w].eigenvecL, dp);
       if(strength!=0.0) 
         god+=strength*eigs[w].eigenvecR;
     }
   }
 
-  /* output.precision(10); */ 
-  output << god << setprecision(5);
-
+  string file2 = "/home/raid/ma595/solid-1D/state_checkMatt.out";
+  ofstream stateout;	
+  stateout.open(file2.c_str());
+  stateout << "pL\n" << pL << setprecision(5);
+  stateout << "pR\n" << pR << setprecision(5);
+  stateout << "Delta p\n" << dp << endl;
+  stateout << "Godunov state\n" << god << setprecision(5);
+  stateout.close();
+   
 
   /* std::cout << "Godunov state \n" << god << std::endl; */
   /* std::cout << "pL state \n" << pL << std::endl; */
@@ -162,24 +187,26 @@ vector<eigen> construct_Eigenvectors_A(System sys, ElasticPrimState pL, ElasticP
   Eigen::Matrix3d A_12 = dstressdF[1];
   Eigen::Matrix3d A_13 = dstressdF[2];
 
-  cout << "\ndstressdF\n" << dstressdF << endl;
+  /* cout << "\ndstressdF\n" << dstressdF << endl; */
   Eigen::Matrix3d I = Eigen::Matrix3d::Identity();
   
+  /* double u1 = pW.u_()(0); */
   double u1 = pW.u_()(0);
 
   const Eigen::Matrix3d m2rho = -2.*rho*G;
   const SquareTensor3 dsdeps = m2rho * pW.dI_dG(G,Inv); //cannot remember this derivation?
   Eigen::Matrix3d dsdeps_ = dsdeps[2];
+
   //might be worth creating this function in system
   Eigen::Matrix3d dsdS = eos.depsi_dI_dS(Inv, pW.S_())[2] * dsdeps_; //only non-zero component
+
+
   Eigen::Vector3d B;
   for(int i = 0; i < 3; i++) {
     B[i] = dsdS(0, i); 
   }
   B *= 1./rho;
 
-  cout << "B\n" << endl;
-  cout << B << endl;
 
   Eigen::Matrix3d E1 = I.col(dirn)*I.row(0);
   Eigen::Matrix3d E2 = I.col(dirn)*I.row(1);
@@ -193,12 +220,12 @@ vector<eigen> construct_Eigenvectors_A(System sys, ElasticPrimState pL, ElasticP
     zero.row(0), zero.row(0), zero.row(0), zero.row(0), u1;
 
   Eigen::EigenSolver<Eigen::MatrixXd> es(AM);
-  cout << es.eigenvectors().col(0).norm();
+  /* cout << es.eigenvectors().col(0).norm(); */
   MatrixXd Re = es.eigenvectors().real();
   MatrixXd Le = es.eigenvectors().real().inverse();
   MatrixXd D = es.eigenvalues().real().asDiagonal();
 
-  cout << "\nEigenvalues\n" << D << endl;
+  /* cout << "\nEigenvalues\n" << D << endl; */
   /* std::cout.precision(4); */ 
   vector<eigen> vecEig(13);
   /* typedef Eigen::Matrix<ElasticPrimState, 13, 1> Vector13Prim; //each row corresponds to eigenvector */
@@ -223,19 +250,15 @@ vector<eigen> construct_Eigenvectors_A(System sys, ElasticPrimState pL, ElasticP
   }
 
   VectorXd eigs = es.eigenvalues().real(); 
-  std::cout << eigs << endl;
-
-  //order descendingly
-  
   std::sort(vecEig.begin(), vecEig.end(),less<eigen>()); //greater
-  for(int i = 0; i < vecEig.size(); i++)
-  {
-    std::cout << vecEig[i].lambda << endl;
-  }
+  
+  /* for(int i = 0; i < vecEig.size(); i++) */
+  /* { */
+  /*   std::cout << vecEig[i].lambda << endl; */
+  /* } */
 
 
   string file = "/home/raid/ma595/solid-1D/eigenvectors.out";
-
   ofstream output;	
   output.open(file.c_str(), ofstream::app); //we append all results to the same file 
   output << "\nRight eigenvectors\n" << endl; 
@@ -281,12 +304,14 @@ vector<eigen> construct_Eigenvectors_A(System sys, ElasticPrimState pL, ElasticP
 
   for(int i = 0; i < 13; i++)
   {
+    output.precision(7);
     output << vecEig[i].lambda << endl;
   }
 
-  godunovState(sys, pL, pR, eos, output, vecEig);
+  godunovState(sys, pL, pR, eos, vecEig);
+  /* output << "AM\n " << AM << endl; */
+  /* output << "B\n" << B << endl; */
   output.close();
-  //compute godunov state here
   return vecEig;
 
   //these tests pass
@@ -693,7 +718,7 @@ void check_drho_dF(ElasticPrimState pL, System sys)
 }
 
 //checked against kevin
-void check_dsigma_dG(ElasticPrimState pL, System sys, ElasticEOS eos)
+void check_dsigma_dG(ElasticPrimState pL, System sys, ElasticEOS eos, std::ofstream& output)
 {
   double rhoL = sys.Density(pL);
   Eigen::Matrix3d FL = pL.F_();
@@ -701,11 +726,12 @@ void check_dsigma_dG(ElasticPrimState pL, System sys, ElasticEOS eos)
 	const Eigen::Matrix3d GL = sys.strainTensor(pL.F_());
 	const Eigen::Vector3d de_dI = eos.depsi_dI(IL, pL.S_());
   std::cout << "Analytical result: \n " << std::endl;
-  
+
+  output << "dsigma_dG\n" << endl;
   for(int i = 0; i < 3; i++)
   {
     const Eigen::Matrix3d ds_dG = pL.dsigma_dG(i, de_dI, GL, rhoL);
-    std::cout << ds_dG << "\n " << std::endl;
+    output << ds_dG << "\n " << std::endl;
   }
 }
 

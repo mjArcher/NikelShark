@@ -209,57 +209,20 @@ vector<Matrix3d> System::dep_dF(const SquareTensor3 dI_dF, const Matrix3d depsi_
 
 // Aijk 
 // this is incorrect?
-SquareTensor3 System::dstress_dF(const ElasticPrimState& primState, const Matrix3d& G, const Vector3d& I) const
-{
-	const double rho = Density(primState);
-	const Matrix3d F = primState.F_();	
-	const double ie =	Eos.internalEnergy(I, primState.S_());
-	const Matrix3d dstress_drho = stress(primState)/rho;
-	const Matrix3d drho_dF = - rho * (F.inverse()).transpose();
-	const Matrix3d m2rho = -2. * rho * G;
-	const vector<Eigen::Matrix3d> depsdF = dep_dF(primState.dI_dF(G,I), Eos.depsi_dI_dI(I, primState.S_()));
-	const Vector3d de_dI = Eos.depsi_dI(I, primState.S_());
-	const SquareTensor3 dsdeps = m2rho * primState.dI_dG(G,I); //cannot remember this derivation?
-	double sigma_rho;
-
-  int dirn = 0;  //function argument eventually
-
-	vector<Matrix3d> A(3);
-	const Matrix3d sigma = stress(primState);
-
-	for (int k = 0; k < 3; k++)
-  {
-		sigma_rho = dstress_drho(0,k);
-		Matrix3d ds_dG = primState.dsigma_dG(k, de_dI, G, rho); 
-    for(int j = 0; j < 3; j++)
-    {
-      for(int m = 0; m < 3; m++){
-				/* A(k, m, j) -- row, column, depth -- index using A[j](k,m) - this is a std array */
-				Matrix3d dGdF = primState.dG_dF(G,F,j,m); //returns 2d slice of tensor at j, m (denominator constant)
-				A[k](j,m) = sigma_rho * drho_dF(j,m) 
-					 + depsdF[0](j,m) * dsdeps[0](dirn,k) 
-           + depsdF[1](j,m) * dsdeps[1](dirn,k) 
-           + depsdF[2](j,m) * dsdeps[2](dirn,k)
-        + (dGdF * ds_dG).trace();
-			}
-		}
-	} 
-	SquareTensor3 dstressdF(A);
-	return dstressdF;
-}
-
 /* SquareTensor3 System::dstress_dF(const ElasticPrimState& primState, const Matrix3d& G, const Vector3d& I) const */
 /* { */
 /* 	const double rho = Density(primState); */
 /* 	const Matrix3d F = primState.F_(); */	
 /* 	const double ie =	Eos.internalEnergy(I, primState.S_()); */
 /* 	const Matrix3d dstress_drho = stress(primState)/rho; */
-/* 	const Matrix3d drho_dF = - rho * (F.inverse()).transpose(); */
-/* 	const Matrix3d m2rho = -2. * rho * G; */
+/* 	const Matrix3d drho_dF = - rho*(F.inverse()).transpose(); */
+/* 	const Matrix3d m2rho = -2.*rho*G; */
 /* 	const vector<Eigen::Matrix3d> depsdF = dep_dF(primState.dI_dF(G,I), Eos.depsi_dI_dI(I, primState.S_())); */
 /* 	const Vector3d de_dI = Eos.depsi_dI(I, primState.S_()); */
 /* 	const SquareTensor3 dsdeps = m2rho * primState.dI_dG(G,I); //cannot remember this derivation? */
 /* 	double sigma_rho; */
+
+/*   int dirn = 0;  //function argument eventually */
 
 /* 	vector<Matrix3d> A(3); */
 /* 	const Matrix3d sigma = stress(primState); */
@@ -273,27 +236,64 @@ SquareTensor3 System::dstress_dF(const ElasticPrimState& primState, const Matrix
 /*       for(int m = 0; m < 3; m++){ */
 /* 				/1* A(k, m, j) -- row, column, depth -- index using A[j](k,m) - this is a std array *1/ */
 /* 				Matrix3d dGdF = primState.dG_dF(G,F,j,m); //returns 2d slice of tensor at j, m (denominator constant) */
-/* 				A[j](k,m) = sigma_rho * drho_dF(j,m) */ 
-/* 					 + depsdF[0](j,m) * dsdeps[0](0,k) */ 
-/*            + depsdF[1](j,m) * dsdeps[1](0,k) */ 
-/*            + depsdF[2](j,m) * dsdeps[2](0,k); */
-/*         /1* + (dGdF * ds_dG).trace(); *1/ */
-/*         //removed the trace */ 
-/*         double sum = 0; */
-/*         for(int q = 0; q < 3; q++){ */
-/*           for(int r = 0; r < 3; r++){ */
-/*             sum += ds_dG(q,r) * dGdF(q,r); */
-/*           } */
-/*         } */
-/*         A[j](k,m) += sum; */
+/* 				A[k](j,m) = sigma_rho * drho_dF(j,m) */ 
+/* 					 + depsdF[0](j,m) * dsdeps[0](dirn,k) */ 
+/*            + depsdF[1](j,m) * dsdeps[1](dirn,k) */ 
+/*            + depsdF[2](j,m) * dsdeps[2](dirn,k) */
+/*         + (dGdF * ds_dG).trace(); */
 /* 			} */
 /* 		} */
 /* 	} */ 
-
 /* 	SquareTensor3 dstressdF(A); */
 /* 	return dstressdF; */
-
 /* } */
+
+SquareTensor3 System::dstress_dF(const ElasticPrimState& primState, const Matrix3d& G, const Vector3d& I) const
+{
+	const double rho = Density(primState);
+	const Matrix3d F = primState.F_();	
+	const double ie =	Eos.internalEnergy(I, primState.S_());
+	const Matrix3d dstress_drho = stress(primState)/rho;
+	const Matrix3d drho_dF = - rho * (F.inverse()).transpose();
+	const Matrix3d m2rho = -2. * rho * G;
+	const vector<Eigen::Matrix3d> depsdF = dep_dF(primState.dI_dF(G,I), Eos.depsi_dI_dI(I, primState.S_()));
+	const Vector3d de_dI = Eos.depsi_dI(I, primState.S_());
+	const SquareTensor3 dsdeps = m2rho * primState.dI_dG(G,I); //cannot remember this derivation?
+	double sigma_rho;
+
+	vector<Matrix3d> A(3);
+	const Matrix3d sigma = stress(primState);
+
+	for (int k = 0; k < 3; k++)
+  {
+		sigma_rho = dstress_drho(0,k);
+		Matrix3d ds_dG = primState.dsigma_dG(k, de_dI, G, rho); 
+    for(int j = 0; j < 3; j++)
+    {
+      for(int m = 0; m < 3; m++){
+				/* A(k, m, j) -- row, column, depth -- index using A[j](k,m) - this is a std array */
+				Matrix3d dGdF = primState.dG_dF(G,F,j,m); //returns 2d slice of tensor at j, m (denominator constant)
+				A[j](k,m) = sigma_rho * drho_dF(j,m) 
+					 + depsdF[0](j,m) * dsdeps[0](0,k) 
+           + depsdF[1](j,m) * dsdeps[1](0,k) 
+           + depsdF[2](j,m) * dsdeps[2](0,k);
+        /* + (dGdF * ds_dG).trace(); */
+        //removed the trace 
+        double sum = 0;
+        for(int q = 0; q < 3; q++){
+          for(int r = 0; r < 3; r++){
+            sum += ds_dG(q,r) * dGdF(q,r);
+          }
+        }
+        A[j](k,m) += sum;
+			}
+		}
+	} 
+
+	SquareTensor3 dstressdF(A);
+	return dstressdF;
+
+}
 
 Vector3d System::B(const ElasticPrimState& pW) const
 {
