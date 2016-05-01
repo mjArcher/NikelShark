@@ -14,7 +14,44 @@
 #include "SquareTensor3.h"
 
 //convert to class
-//
+
+typedef Eigen::Matrix<double, 13, 1> Vector13d;
+//possible linker error?
+struct eigen { 
+  double lambda;
+  ElasticPrimState eigenvecR;
+  ElasticPrimState eigenvecL;
+  
+  //default constructor
+  eigen(){}
+
+  eigen(const double val, Vector13d vecL, Vector13d vecR){
+    lambda = val;
+    eigenvecL = convert(vecL);
+    eigenvecR = convert(vecR); //normalised 
+  }
+
+  ElasticPrimState convert(Vector13d vecR)
+  {
+    ElasticPrimState temp;
+    for(int i = 0; i < 13; i++)
+    {
+      temp[i] = vecR[i];
+    }
+    return temp;
+  }
+
+  //descending order 
+  bool operator>(eigen const &other) const { 
+    return lambda > other.lambda;
+  }
+
+  //ascending order 
+  bool operator<(eigen const &other) const { 
+    return lambda < other.lambda;
+  }
+};
+
 class System {
 
 //store invariants
@@ -56,9 +93,6 @@ class System {
 		//! Symmetric matrix of stresses.
 		Eigen::Matrix3d stress(const ElasticPrimState&) const;
 
-		//! compute the acoustic tensor (a given cooridinate direction?)
-		/* Eigen::Matrix3d AcousticTensor(const ElasticPrimState) const; */
-
 		//! Compute the eigen decomposition of the acoustic tensor - return a vector of eigenvalues
 		//13 element vectors - a square matrix containing 13 x 13 elements
 		Eigen::VectorXd stateEigenDecompose(const ElasticPrimState&, const int, std::vector<ElasticPrimState>&, std::vector<ElasticPrimState>&) const;
@@ -67,29 +101,30 @@ class System {
 		double maxWaveSpeeds() const;
 
 		//! Compute the acoustic tensor 
-		Eigen::Matrix3d AcousticTensor(const ElasticPrimState& pri) const;
+		Eigen::Matrix3d AcousticTensor(const ElasticPrimState& pri, const int dirn) const;
 
     ElasticState godunovFlux(const ElasticState& qL, const ElasticState& qR) const;
-
     
     Eigen::Vector3d B(const ElasticPrimState&) const;
 
-    Eigen::VectorXd stateEigenDecompose_A(const ElasticPrimState& pW, const int dirn, std::vector<ElasticPrimState>& Le, std::vector<ElasticPrimState>& Re) const;
+    std::vector<eigen> stateEigenDecompose_A(const ElasticPrimState& pW, ElasticPrimState pR, ElasticEOS eos, const int dirn) const;
 
-    //move this back
-		SquareTensor3 dstress_dF(const ElasticPrimState&, const Eigen::Matrix3d& G, const Eigen::Vector3d& inv) const;
+    Eigen::VectorXd stateEigenDecompose_A_old(const ElasticPrimState& pW, const int dirn, std::vector<ElasticPrimState>& Le, std::vector<ElasticPrimState>& Re) const;
+
+    Eigen::VectorXd stateEigenDecompose_Omega(const ElasticPrimState& pW, const int dirn, std::vector<ElasticPrimState>& Le, std::vector<ElasticPrimState>& Re) const; 
+
+		SquareTensor3 dstress_dF(const ElasticPrimState&, const Eigen::Matrix3d& G, const Eigen::Vector3d& inv, const int dirn) const;
 
 		std::vector<Eigen::Matrix3d> dep_dF(const SquareTensor3, const Eigen::Matrix3d) const;
-
-    
 
   private:
 
 
-
+    ElasticPrimState godunovState(System sys, ElasticPrimState pL, ElasticPrimState pR, ElasticEOS eos, std::vector<eigen> eigs);
     //prototype may need to be modified 
 	  ElasticPrimState godunovState(const ElasticPrimState pL, const ElasticPrimState pR) const;
 
+    double dotState(ElasticPrimState state1, ElasticPrimState state2);
 
     /* ElasticState godunovFlux(const ElasticPrimState& pL, const ElasticPrimState& pR); */
 

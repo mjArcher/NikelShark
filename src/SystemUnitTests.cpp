@@ -17,40 +17,40 @@ double dot(ElasticPrimState state1, ElasticPrimState state2);
 
 typedef Eigen::Matrix<double, 13, 1> Vector13d;
 
-struct eigen { 
-  double lambda;
-  ElasticPrimState eigenvecR;
-  ElasticPrimState eigenvecL;
+/* struct eigen { */ 
+/*   double lambda; */
+/*   ElasticPrimState eigenvecR; */
+/*   ElasticPrimState eigenvecL; */
   
-  //default constructor
-  eigen(){}
+/*   //default constructor */
+/*   eigen(){} */
 
-  eigen(const double val, Vector13d vecL, Vector13d vecR){
-    lambda = val;
-    eigenvecL = convert(vecL);
-    eigenvecR = convert(vecR); //normalised 
-  }
+/*   eigen(const double val, Vector13d vecL, Vector13d vecR){ */
+/*     lambda = val; */
+/*     eigenvecL = convert(vecL); */
+/*     eigenvecR = convert(vecR); //normalised */ 
+/*   } */
 
-  ElasticPrimState convert(Vector13d vecR)
-  {
-    ElasticPrimState temp;
-    for(int i = 0; i < 13; i++)
-    {
-      temp[i] = vecR[i];
-    }
-    return temp;
-  }
+/*   ElasticPrimState convert(Vector13d vecR) */
+/*   { */
+/*     ElasticPrimState temp; */
+/*     for(int i = 0; i < 13; i++) */
+/*     { */
+/*       temp[i] = vecR[i]; */
+/*     } */
+/*     return temp; */
+/*   } */
 
-  //descending order 
-  bool operator>(eigen const &other) const { 
-    return lambda > other.lambda;
-  }
+/*   //descending order */ 
+/*   bool operator>(eigen const &other) const { */ 
+/*     return lambda > other.lambda; */
+/*   } */
 
-  //ascending order 
-  bool operator<(eigen const &other) const { 
-    return lambda < other.lambda;
-  }
-};
+/*   //ascending order */ 
+/*   bool operator<(eigen const &other) const { */ 
+/*     return lambda < other.lambda; */
+/*   } */
+/* }; */
 
 void godunovState(System sys, ElasticPrimState pL, ElasticPrimState pR, ElasticEOS eos, std::vector<eigen>);
 std::vector<eigen> construct_Eigenvectors_A(System sys, ElasticPrimState pL, ElasticPrimState pW, ElasticEOS eos);
@@ -93,7 +93,8 @@ int main(void)
   
 	const Eigen::Matrix3d G = sys.strainTensor(pW.F_());
 	const Eigen::Vector3d I = sys.getInvariants(pW.F_());
-  SquareTensor3 dstressdF = sys.dstress_dF(pW, G, I);
+  int dirn = 0;
+  SquareTensor3 dstressdF = sys.dstress_dF(pW, G, I, dirn);
   
   /* std::cout << dstressdF << std::endl; */
   /* check_B(pW, sys, eos); */
@@ -171,7 +172,7 @@ vector<eigen> construct_Eigenvectors_A(System sys, ElasticPrimState pL, ElasticP
   const Eigen::Matrix3d FT = pW.F_().transpose();
 	const Eigen::Matrix3d G = sys.strainTensor(F);
 	const Eigen::Vector3d Inv = sys.getInvariants(F);
-  SquareTensor3 dstressdF = sys.dstress_dF(pW, G, Inv);
+  SquareTensor3 dstressdF = sys.dstress_dF(pW, G, Inv, dirn);
   
   //construct curly A
   //is it possible to eigendecompose a typedef?
@@ -361,7 +362,7 @@ void construct_Eigenvectors(System sys, ElasticPrimState pW, ElasticEOS eos)
   std::cout << "CONSTRUCT EIGENVECTORS\n" << std::endl;
   int dirn = 0;
   /* Eigen::MatrixXcd Q = es.eigenvectors(); */
-  Eigen::Matrix3d omega = sys.AcousticTensor(pW);
+  Eigen::Matrix3d omega = sys.AcousticTensor(pW, dirn);
   std::cout << "acoustic tensor\n" << omega << std::endl;
   Eigen::EigenSolver<Eigen::Matrix3d> es(omega);
   Eigen::Matrix3d V = es.pseudoEigenvectors();
@@ -404,7 +405,7 @@ void construct_Eigenvectors(System sys, ElasticPrimState pW, ElasticEOS eos)
   }
   B *= 1./rho;
   
-  SquareTensor3 dstressdF = sys.dstress_dF(pW, G, I);
+  SquareTensor3 dstressdF = sys.dstress_dF(pW, G, I, dirn);
   std::cout << dstressdF << std::endl;
   Eigen::Matrix3d DQ = D*Q;
   Eigen::Matrix3d QA_11 = Q*dstressdF[0];
@@ -615,7 +616,8 @@ void construct_Eigenvectors(System sys, ElasticPrimState pW, ElasticEOS eos)
 
 void compute_AcousticTensor(System sys, ElasticPrimState pW)
 {
-  Eigen::Matrix3d omega = sys.AcousticTensor(pW);
+  int dirn = 0;
+  Eigen::Matrix3d omega = sys.AcousticTensor(pW, dirn);
   std::cout << "Compute acoustic tensor test\n" << omega  << std::endl;
   printf("\nEigenvalues and orthogonal (eigenvectors) matrix Q\n"); 
   Eigen::EigenSolver<Eigen::Matrix3d> es(omega);
