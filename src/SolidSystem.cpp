@@ -176,13 +176,11 @@ Matrix3d System::AcousticTensor(const ElasticPrimState& primState, const int dir
   Matrix3d omega;
 	const SquareTensor3 dsdFe = dstress_dF(primState, G, I,dirn); //need to decide on a return type here
 	//construct acoustic tensor	i, j, k, m : i does not change for 1D 
-	//population of acoustic tensor
-	//dirn = 0 for 1D problem
   for(int i=0; i<3; ++i){
     for(int j=0; j<3; ++j){
       omega(i,j) = 0.0;
       for(int k=0; k<3; ++k){	
-				omega(i,j) += dsdFe(i,j,k) * F(0,k); //symmetric 
+				omega(i,j) += dsdFe(i,j,k) * F(dirn,k); //symmetric 
       }
       omega(i,j) /= rho;
     }
@@ -207,6 +205,16 @@ vector<Matrix3d> System::dep_dF(const SquareTensor3 dI_dF, const Matrix3d depsi_
 	/* depsi_dF[1] = depsi_dI_dI[1] * dI_dF[1]; */
 	/* depsi_dF[2] = depsi_dI_dI[2] * dI_dF[2]; */
 	return depsi_dF;
+}
+
+double System::getMaxWaveSpeed(const ElasticPrimState& prim, const int dirn) const
+{
+  //can do this a number of ways
+  //we can take the eigenvalues from decomposition of A (this means performing the expensive decomposition again)
+  //or we could decompose the acoustic tensor - this would be be more efficient
+  //or we could just guess
+  double a = 10000;
+  return abs(prim.u_()[dirn]) + a;
 }
 
 // Aijk 

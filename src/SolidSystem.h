@@ -119,13 +119,16 @@ class System {
 
 	  ElasticPrimState godunovState(const ElasticPrimState& pL, const ElasticPrimState& pR, const int dirn) const;
 
+    double getMaxWaveSpeed(const ElasticPrimState& pL, const int dirn) const;
+
+    double dotState(ElasticPrimState& state1, ElasticPrimState& state2) const;
+
   private:
 
 
     /* ElasticPrimState godunovState(const ElasticPrimState pL, const ElasticPrimState pR); */
     /* //prototype may need to be modified */ 
 
-    double dotState(ElasticPrimState& state1, ElasticPrimState& state2) const;
 
     /* ElasticState godunovFlux(const ElasticPrimState& pL, const ElasticPrimState& pR); */
 

@@ -63,30 +63,27 @@ int main(void)
   int dirn = 0;
   SquareTensor3 dstressdF = sys.dstress_dF(pW, G, I, dirn);
   
-  /* std::cout << dstressdF << std::endl; */
-  /* check_B(pW, sys, eos); */
-  // therefore Q-1 = V 
-  //construct eigenvectors
-  vector<eigen> egs = construct_Eigenvectors_A(sys, primStateL, primStateR, eos);
+  /* vector<eigen> egs = construct_Eigenvectors_A(sys, primStateL, primStateR, eos); */
 
-  string file1 = "/home/raid/ma595/solid-1D/dstress_dFTest.out";
-  ofstream dsdFout;	
-  dsdFout.open(file1.c_str(),ofstream::app);
+  /* string file1 = "/home/raid/ma595/solid-1D/dstress_dFTest.out"; */
+  /* ofstream dsdFout; */	
+  /* dsdFout.open(file1.c_str(),ofstream::app); */
 
 
-  dsdFout << "Matt's\ndstressdF\n " << dstressdF[0] << endl;
-  dsdFout << "\n " << dstressdF[1] << endl;
-  dsdFout << "\n " << dstressdF[2] << "\n" << endl;
+  /* dsdFout << "Matt's\ndstressdF\n " << dstressdF[0] << endl; */
+  /* dsdFout << "\n " << dstressdF[1] << endl; */
+  /* dsdFout << "\n " << dstressdF[2] << "\n" << endl; */
 
-  check_dsigma_dG(pW, sys, eos, dsdFout);
-  dsdFout << "G\n" << G << endl;
-	const Eigen::Vector3d de_dI = eos.depsi_dI(I, pW.S_());
-  dsdFout << "de_dI\n" << de_dI << endl;
-  dsdFout.close();
+  /* check_dsigma_dG(pW, sys, eos, dsdFout); */
+  /* dsdFout << "G\n" << G << endl; */
+	/* const Eigen::Vector3d de_dI = eos.depsi_dI(I, pW.S_()); */
+  /* dsdFout << "de_dI\n" << de_dI << endl; */
+  /* dsdFout.close(); */
   //we can also do tests of the eigendecomposition
 
   //also experiment with single iteration, is this more efficient?
   callsToSystem(sys, primStateL, primStateR);
+  construct_Eigenvectors(sys, pW, eos);
 }
 
 
@@ -351,15 +348,15 @@ void construct_Eigenvectors(System sys, ElasticPrimState pW, ElasticEOS eos)
   //Q-1 = V
   //L = D^2
   Eigen::Matrix3d D;
-  Eigen::Matrix3d Dinv = D.inverse();
   /* std::cout << L << std::endl; */
   D(0,0) = pow(eigs(0,0),0.5);
   D(1,1) = pow(eigs(1,1),0.5);
   D(2,2) = pow(eigs(2,2),0.5);
-  std::cout << " D " << D << "\n" << std::endl;
+  Eigen::Matrix3d Dinv = D.inverse();
+  /* std::cout << " D " << D << "\n" << std::endl; */
   Eigen::Matrix3d Q = V.inverse();
   Eigen::Matrix3d Qinv = V;
-  std::cout << "Qinv\n " << Qinv << "\n " << std::endl;
+  /* std::cout << "Qinv\n " << Qinv << "\n " << std::endl; */
  
   Eigen::Matrix3d perm = Eigen::Matrix3d::Zero();
   //permutation matrix
@@ -383,13 +380,12 @@ void construct_Eigenvectors(System sys, ElasticPrimState pW, ElasticEOS eos)
     B[i] = dsdS(dirn, i); 
   }
   B *= 1./rho;
-  
+
   SquareTensor3 dstressdF = sys.dstress_dF(pW, G, I, dirn);
-  std::cout << dstressdF << std::endl;
   Eigen::Matrix3d DQ = D*Q;
-  Eigen::Matrix3d QA_11 = Q*dstressdF[0];
-  Eigen::Matrix3d QA_12 = Q*dstressdF[1];
-  Eigen::Matrix3d QA_13 = Q*dstressdF[2];
+  Eigen::Matrix3d QA_11 = Q*(1./rho)*dstressdF[0];
+  Eigen::Matrix3d QA_12 = Q*(1./rho)*dstressdF[1];
+  Eigen::Matrix3d QA_13 = Q*(1./rho)*dstressdF[2];
   Eigen::Vector3d QB1 = Q*B;
   //the first row is B when dir = 0, self explanatory
  
@@ -412,7 +408,7 @@ void construct_Eigenvectors(System sys, ElasticPrimState pW, ElasticEOS eos)
   Vector13Prim Le, Re;// initialise with zero components 
   ElasticPrimState la, law;
   Eigen::Matrix3d zero = Eigen::Matrix3d::Zero();
-
+  Eigen::Vector3d zeroV(0,0,0);
   // it does make sense to wrap in elasticPrimState
   // a and aw = acoustic 
   // d and dp are linearly degenerate 
@@ -427,12 +423,12 @@ void construct_Eigenvectors(System sys, ElasticPrimState pW, ElasticEOS eos)
 
     la.u(DQ.row(w));
     la.F(tl);
-    la.S(Q(w));
+    la.S(QB1(w));
     Le(w) = la;
 
     law.u(DQ.row(w));
     law.F(-tl);
-    law.S(Q(w));
+    law.S(QB1(w));
     Le(wr) = law;   
   }
 
@@ -451,17 +447,20 @@ void construct_Eigenvectors(System sys, ElasticPrimState pW, ElasticEOS eos)
     w+=2;
   }
 
+  ElasticPrimState ld;
+  ld.u(zeroV);
+  ld.F(zero);
+  ld.S(1.0);
+  Le(9) = ld;
   //and linearly degenerate left eigenvectors
-
- 
   //Right eigenvectors 
   //acoustic eigenvectors
   Eigen::Matrix3d QinvDinv = Qinv*Dinv;
+  /* cout << "QINV*DINV " << QinvDinv <<  "\n " << Qinv << "\n " << Dinv << "\n" << endl; */
   Eigen::Matrix3d QinvDinvT = (Qinv*Dinv).transpose();
   Eigen::Matrix3d QinvDinv2 = QinvDinv*Dinv;
   /* Eigen::Matrix3d QinvDinv2 = (Qinv*Dinv*Dinv).transpose(); */
   Eigen::Matrix3d FT = F.transpose();
-  std::cout << "Right eigenvectors " << std::endl;
   
   for(w = 0; w < 3; w++)
   {
@@ -486,14 +485,13 @@ void construct_Eigenvectors(System sys, ElasticPrimState pW, ElasticEOS eos)
   //shear components
   Eigen::Matrix3d ominv = omega.inverse();
   //may be possible to vectorise this 
-  Eigen::Matrix3d ominvA11 = ominv*dstressdF[0];
-  Eigen::Matrix3d ominvA12 = ominv*dstressdF[1];
-  Eigen::Matrix3d ominvA13 = ominv*dstressdF[2];
+  Eigen::Matrix3d ominvA11 = ominv*(1./rho)*dstressdF[0];
+  Eigen::Matrix3d ominvA12 = ominv*(1./rho)*dstressdF[1];
+  Eigen::Matrix3d ominvA13 = ominv*(1./rho)*dstressdF[2];
   typedef Eigen::Matrix<Eigen::Matrix3d, 3, 1> Vector3M; //each row corresponds to eigenvector
   Vector3M ominvA(ominvA11, ominvA12, ominvA13);
-  Eigen::Vector3d zeroV(0,0,0);
   int s = 3;// these are the Re indices
-  int sw = s++;
+  int sw = 4;
 
   for(int i = 0; i < 3; i++)
   {
@@ -502,21 +500,24 @@ void construct_Eigenvectors(System sys, ElasticPrimState pW, ElasticEOS eos)
     rsw.u(zeroV);
 
     Eigen::Matrix3d Fs = ominvA[i].col(1)*F.row(dirn);
-    rs.F(Fs);
     Fs(i,1) -= 1.;
-    Eigen::Matrix3d Fsw = ominvA[i].col(1)*F.row(dirn);
+    rs.F(Fs);
+    Eigen::Matrix3d Fsw = ominvA[i].col(2)*F.row(dirn);
     Fsw(i,2) -= 1.;
     rsw.F(Fsw);
     //need to subtract t
  
     rs.S(0);
     rsw.S(0);
-
+    
+    /* cout << s << endl; */
+    /* cout << sw << endl; */
+    
     Re[s] = rs;
     Re[sw] = rsw;
 
-    s++;
-    sw++;
+    s+=2;
+    sw+=2;
   }
 
   //linearly degenerate eigenvector
@@ -526,17 +527,26 @@ void construct_Eigenvectors(System sys, ElasticPrimState pW, ElasticEOS eos)
   rd.u(zeroV);
   rd.F(FominvB);
   rd.S(-1.0);
-  Re[9] = rd;
+  Re[9] = -1.0*rd;
 
+  std::cout << "Left eigenvectors " << std::endl;
   for(int i = 0; i < Le.size(); i++)
     std::cout << Le[i] << std::endl;
 
-  std::cout << D << std::endl;
+  std::cout << "Right eigenvectors " << std::endl;
+  for(int i = 0; i < Re.size(); i++)
+    std::cout << Re[i] << std::endl;
+
+  /* std::cout << D << std::endl; */
+
+  //check that LR = I 
+
+  for(int i = 0; i < 13; i++)
+  {
+    std::cout << sys.dotState(Le[i],Re[i]) << endl;
+  }
 
 
-
-
-  //check against kevin.
 
 
   //representation of unit dyads 

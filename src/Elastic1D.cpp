@@ -614,11 +614,7 @@ ElasticState grad(const Material& mat, int i)
 //need to parallelise
 double getMinDt(const Material& mat)
 {
-	double Smax = 0, a, u_1;
-	a = 10000; //to be calculated
-	/* double c = ElasticState::soundSpeed(); */
-	//! Convert to primitive 
-
+  System sys = mat.sys; 
   double sharedmindt = std::numeric_limits<double>::max(); 
 #pragma omp parallel
   {
@@ -626,42 +622,15 @@ double getMinDt(const Material& mat)
 #pragma omp for nowait schedule(dynamic)
     for (int i = mat.dom.starti; i < mat.dom.endi; i++) 
     {
-      /* ElasticPrimState prim = mat.sys.conservativeToPrimitive(mat.sol[i]); */
-      /* double primVel = prim[0]; */	
-      /* u_1 = fabs(primVel); */
-      /* double rho = mat.sys.Density(prim); */
-
-      ElasticState state = mat.sol[i];
-      double momx = state[0];
-      double rho = mat.sys.Density(state);
-      double primVel = momx/rho;
-
-      u_1 = fabs(primVel);
-      /* double rho = mat.sys.Density(prim); */
-      
-
-      if(rho > 0) {
-        if((a + u_1) > Smax)
-        {
-          Smax = a + u_1; 
-        	mindt = mat.dom.dx/Smax;
-        }
-      }		 
-      else { cout << "density is zero or negative: exit" << endl; exit(1);	}
+      double Smax = sys.getMaxWaveSpeed(sys.conservativeToPrimitive(mat.sol[i]),0);
+      mindt = min(mat.dom.dx/Smax, mindt);
     }	
 #pragma omp critical
     {
       sharedmindt = std::min(sharedmindt, mindt);
     }
   }
-
   return sharedmindt;
-/* 	if(dt == 0) */
-/* 	{ */
-/* 		cout << "dt == 0: exit" << endl; */
-/* 		exit(1); */
-/* 	} */	
-	/* cout << "Smax " << Smax << " dt " << dt << endl; */
 }
 
 void printArray(Material mat)
