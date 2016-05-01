@@ -8,6 +8,8 @@ System::System(const ElasticEOS eos):Eos(eos){}
 
 System::~System(){}
 
+/* #define debug_ */
+
 //solid problem worth addressing for efficiency purposes is that when convert from 
 
 ElasticPrimState System::conservativeToPrimitive(const ElasticState& consState) const 
@@ -316,7 +318,6 @@ Vector3d System::B(const ElasticPrimState& pW) const
   /* cout << B << endl; */
 }
 
-typedef Eigen::Matrix<double, 13, 1> Vector13d;
 
 /* struct eigen { */ 
 /*   double lambda; */
@@ -356,8 +357,10 @@ typedef Eigen::Matrix<double, 13, 1> Vector13d;
 /* vector<eigen> construct_Eigenvectors_A(System sys, ElasticPrimState pL, ElasticPrimState pR, ElasticEOS eos) */
 /* { */
 
-vector<eigen> System::stateEigenDecompose_A(const ElasticPrimState& pW, ElasticPrimState pR, ElasticEOS eos, const int dirn) const
+
+vector<eigen> System::stateEigenDecompose_A(const ElasticPrimState& pL, const ElasticPrimState& pR, const int dirn) const
 {
+  ElasticPrimState pW = 0.5*(pL + pR);
 	const double rho = Density(pW);
   const Eigen::Matrix3d F = pW.F_();
   const Eigen::Matrix3d FT = pW.F_().transpose();
@@ -374,7 +377,9 @@ vector<eigen> System::stateEigenDecompose_A(const ElasticPrimState& pW, ElasticP
   Eigen::Matrix3d A_12 = dstressdF[1];
   Eigen::Matrix3d A_13 = dstressdF[2];
 
-  cout << "\ndstressdF\n" << dstressdF << endl;
+#ifdef debug
+  cout << "\ndstressdF\n" << dstressdF[0] << "\n" << dstressdF[1] << "\n" << dstressdF[2] << "\n" << endl;
+#endif
   Eigen::Matrix3d I = Eigen::Matrix3d::Identity();
   double u1 = pW.u_()(dirn);
   Eigen::Matrix3d E1 = I.col(dirn)*I.row(0);
@@ -393,6 +398,11 @@ vector<eigen> System::stateEigenDecompose_A(const ElasticPrimState& pW, ElasticP
   MatrixXd Re = es.eigenvectors().real();
   MatrixXd Le = es.eigenvectors().real().inverse(); //more efficient way of doing this 
   VectorXd lambda = es.eigenvalues().real();
+  //check if eigenvalues are real
+  /* if(eval[0]<=0.0 || eval[1]<=0.0 || eval[2]<=0.0) { */
+  /*   cerr << "Error: non-positive eigenvalue in InterfaceDecompose\n"; */
+  /*   exit(1); */
+  /* } */
   vector<eigen> vecEig(13);
 
   for(int i = 0; i < 13; i++){
@@ -432,7 +442,7 @@ VectorXd System::stateEigenDecompose_A_old(const ElasticPrimState& pW,
   Eigen::Matrix3d A_12 = dstressdF[1];
   Eigen::Matrix3d A_13 = dstressdF[2];
 
-  cout << "\ndstressdF\n" << dstressdF << endl;
+  
   Eigen::Matrix3d I = Eigen::Matrix3d::Identity();
   double u1 = pW.u_()(0);
   //might be worth creating this function in system
@@ -494,25 +504,38 @@ VectorXd System::stateEigenDecompose_Omega(const ElasticPrimState& pW,
 
 ElasticState System::godunovFlux(const ElasticState& qL, const ElasticState& qR) const
 {
-  return flux(godunovState(conservativeToPrimitive(qL), conservativeToPrimitive(qR)));
+  return flux(godunovState(conservativeToPrimitive(qL), conservativeToPrimitive(qR), 0)); //add dirn to this 
 }
 
-ElasticPrimState System::godunovState(System sys, ElasticPrimState pL, ElasticPrimState pR, ElasticEOS eos, vector<eigen> eigs)
+ElasticPrimState System::godunovState(const ElasticPrimState& pL, const ElasticPrimState& pR, const int dirn) const
 {
-  const ElasticPrimState dp = pR - pL;
+  if (pL == pR)
+    return pL;
+  vector<eigen> eigs = stateEigenDecompose_A(pL, pR, dirn);
+  ElasticPrimState dp = pR - pL;
   ElasticPrimState god = pL;
   for(int w=0; w<13; ++w) {
     if(eigs[w].lambda <0.0) {
-      cout << eigs[w].lambda << endl;
+      /* cout << eigs[w].lambda << endl; */
       const double strength = dotState(eigs[w].eigenvecL, dp);
       if(strength!=0.0) 
         god+=strength*eigs[w].eigenvecR;
     }
   }
+
+#ifdef debug_
+  cout << "\npL\n" << pL << "\npR\n" << pR << "\nGodunov state\n" << god << "\nEigenvalues\n " << endl;  
+  for(int w = 0; w < 13; ++w)
+  {
+    if(eigs[w].lambda <0.0) 
+      cout << eigs[w].lambda << endl;
+  }
+#endif
+
   return god;
 }
 
-double System::dotState(ElasticPrimState state1, ElasticPrimState state2)
+double System::dotState(ElasticPrimState& state1, ElasticPrimState& state2) const
 {
   double temp = 0;
   for(int i = 0; i < 13; i++)
@@ -522,13 +545,13 @@ double System::dotState(ElasticPrimState state1, ElasticPrimState state2)
   return temp;
 }
 
-ElasticPrimState System::godunovState(ElasticPrimState pL, ElasticPrimState pR) const
-{
-  if (pL == pR)
-    return pL;
-  // compute the eigenvalues, L and R eigenvectors.
-  const ElasticPrimState pW = 0.5*(pL + pR);
-  vector<ElasticPrimState> Le(14), Re(14); //test if this has actually initialised correctly.
+/* ElasticPrimState System::godunovState(ElasticPrimState pL, ElasticPrimState pR) const */
+/* { */
+/*   if (pL == pR) */
+/*     return pL; */
+/*   // compute the eigenvalues, L and R eigenvectors. */
+/*   const ElasticPrimState pW = 0.5*(pL + pR); */
+/*   vector<ElasticPrimState> Le(14), Re(14); //test if this has actually initialised correctly. */
   /* const VectorXd lambda = stateEigenDecompose(pW, 0, Le, Re); // within this construct the acoustic tensor */
 
   /* /1* VectorXd VectorXd(ElasticPrimState::e_size); *1/ */
@@ -551,7 +574,7 @@ ElasticPrimState System::godunovState(ElasticPrimState pL, ElasticPrimState pR) 
   /*   } */
   /* } */
   /* return god; */
-}
+/* } */
 	
 /* TinyVector<double, 14> System::StateEigenDecompose(const ElasticPrimState& pW, */
 /* 		const int dirn, */

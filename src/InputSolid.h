@@ -217,7 +217,7 @@ class InputSolid{
               FL(i,j) = riemannStateL["F"][count];
               FR(i,j) = riemannStateR["F"][count];
               double val = settingState["F"][count]; //alternate way
-              printf("F(%d,%d) = %4.2f\n", i, j, val);
+              /* printf("F(%d,%d) = %4.2f\n", i, j, val); */
             }
           }
           // get velocity components:

@@ -113,6 +113,7 @@ void solveXGodunov(Material& mat, const double dt)
 	{
 	  mat.sol[i] += dt_dX*(mat.sys.godunovFlux(soln[i-1], soln[i]) - mat.sys.godunovFlux(soln[i], soln[i+1]));
 	}
+  /* exit(1); */
 	//printArray(U);
 	BCs(mat);
 }
@@ -878,7 +879,7 @@ void advance(Material& mat, const double dt) //or evolve?
 // cylindrical //spherical bcs //plasticity
   //series of advance functions: levelset, geometric bcs, 
   /* solveXWENO(mat, dt); */
-  solveXSLIC(mat, dt);
+  solveXGodunov(mat, dt);
 }
 
 
@@ -941,7 +942,6 @@ int solveSystem(InputSolid inputSolid, Material* mat){
     /*   outputGnu(outFile, *mat, outStep, t); */
     /*   break; */
     /* } */
-
 		++step;
 	}
 

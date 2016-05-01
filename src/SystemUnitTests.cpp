@@ -14,43 +14,10 @@ void check_dsigma_deps(ElasticPrimState prim, System sys);
 void check_B(ElasticPrimState prim, System sys, ElasticEOS eos);
 void construct_Eigenvectors(System sys, ElasticPrimState pW, ElasticEOS eos);
 double dot(ElasticPrimState state1, ElasticPrimState state2);
+void callsToSystem(System sys, ElasticPrimState pL, ElasticPrimState pR);
 
 typedef Eigen::Matrix<double, 13, 1> Vector13d;
 
-/* struct eigen { */ 
-/*   double lambda; */
-/*   ElasticPrimState eigenvecR; */
-/*   ElasticPrimState eigenvecL; */
-  
-/*   //default constructor */
-/*   eigen(){} */
-
-/*   eigen(const double val, Vector13d vecL, Vector13d vecR){ */
-/*     lambda = val; */
-/*     eigenvecL = convert(vecL); */
-/*     eigenvecR = convert(vecR); //normalised */ 
-/*   } */
-
-/*   ElasticPrimState convert(Vector13d vecR) */
-/*   { */
-/*     ElasticPrimState temp; */
-/*     for(int i = 0; i < 13; i++) */
-/*     { */
-/*       temp[i] = vecR[i]; */
-/*     } */
-/*     return temp; */
-/*   } */
-
-/*   //descending order */ 
-/*   bool operator>(eigen const &other) const { */ 
-/*     return lambda > other.lambda; */
-/*   } */
-
-/*   //ascending order */ 
-/*   bool operator<(eigen const &other) const { */ 
-/*     return lambda < other.lambda; */
-/*   } */
-/* }; */
 
 void godunovState(System sys, ElasticPrimState pL, ElasticPrimState pR, ElasticEOS eos, std::vector<eigen>);
 std::vector<eigen> construct_Eigenvectors_A(System sys, ElasticPrimState pL, ElasticPrimState pW, ElasticEOS eos);
@@ -66,13 +33,13 @@ int main(void)
 
   /* const ElasticPrimState priL(SquareMatrix(),DV3(5,500,1000),1000,0); */        
 
-	FL <<	0.98,0.1,0.15,-0.02,1.1,0.1,0.15,0.015,1.2;
-	uL << 50., 500., 1000.;
-	SL = 1000;
-
-	/* FL <<	 0.98, 0, 0, 0.02, 1, 0.1, 0, 0, 1; */
-	/* uL << 0, 500, 1000; */
+	/* FL <<	0.98,0.1,0.15,-0.02,1.1,0.1,0.15,0.015,1.2; */
+	/* uL << 50., 500., 1000.; */
 	/* SL = 1000; */
+
+	FL <<	 0.98, 0, 0, 0.02, 1, 0.1, 0, 0, 1;
+	uL << 0, 500, 1000;
+	SL = 1000;
 
 	uR << 0, 0, 0;
 	FR << 1., 0, 0, 0, 1., 0.1, 0, 0, 1.;
@@ -119,6 +86,18 @@ int main(void)
   //we can also do tests of the eigendecomposition
 
   //also experiment with single iteration, is this more efficient?
+  callsToSystem(sys, primStateL, primStateR);
+}
+
+
+void callsToSystem(System sys, ElasticPrimState pL, ElasticPrimState pR)
+{
+  string file = "/home/raid/ma595/solid-1D/system.out";
+  ofstream systemout;	
+  systemout.open(file.c_str());
+  ElasticPrimState god = sys.godunovState(pL, pR, 0);
+  systemout << "Godunov State\n" << god << "\nLeft state\n" << pL << "\nRight state\n " << pR << endl;
+  //output eigenvalues
 }
 
 //this is a test to sort objects  using the std::sort algorithm

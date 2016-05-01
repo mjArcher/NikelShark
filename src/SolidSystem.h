@@ -107,7 +107,7 @@ class System {
     
     Eigen::Vector3d B(const ElasticPrimState&) const;
 
-    std::vector<eigen> stateEigenDecompose_A(const ElasticPrimState& pW, ElasticPrimState pR, ElasticEOS eos, const int dirn) const;
+    std::vector<eigen> stateEigenDecompose_A(const ElasticPrimState& pL, const ElasticPrimState& pR, const int dirn) const;
 
     Eigen::VectorXd stateEigenDecompose_A_old(const ElasticPrimState& pW, const int dirn, std::vector<ElasticPrimState>& Le, std::vector<ElasticPrimState>& Re) const;
 
@@ -117,14 +117,15 @@ class System {
 
 		std::vector<Eigen::Matrix3d> dep_dF(const SquareTensor3, const Eigen::Matrix3d) const;
 
+	  ElasticPrimState godunovState(const ElasticPrimState& pL, const ElasticPrimState& pR, const int dirn) const;
+
   private:
 
 
-    ElasticPrimState godunovState(System sys, ElasticPrimState pL, ElasticPrimState pR, ElasticEOS eos, std::vector<eigen> eigs);
-    //prototype may need to be modified 
-	  ElasticPrimState godunovState(const ElasticPrimState pL, const ElasticPrimState pR) const;
+    /* ElasticPrimState godunovState(const ElasticPrimState pL, const ElasticPrimState pR); */
+    /* //prototype may need to be modified */ 
 
-    double dotState(ElasticPrimState state1, ElasticPrimState state2);
+    double dotState(ElasticPrimState& state1, ElasticPrimState& state2) const;
 
     /* ElasticState godunovFlux(const ElasticPrimState& pL, const ElasticPrimState& pR); */
 
