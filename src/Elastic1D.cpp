@@ -103,6 +103,7 @@ void ICInterface(Material& mat,
 }
 
 //supply left state 
+//this will affect the calculation of the timestep
 void solveXGodunov(Material& mat, const double dt)
 {
 	const double dt_dX = dt/mat.dom.dx;
