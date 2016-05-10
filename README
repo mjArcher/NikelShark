@@ -1,3 +1,28 @@
+10/05/16
+========
+get code generation working this week. 
+1D ghost fluid implementation / levelsets / construct
+
+
+30/04/16
+========
+godunov state fully checked (decomposition of curly A)
+
+today:
+======
+get godunov solver working (1D elasticity) //done 
+soundspeed for timestep calculation 
+checks for complex sound-speed in eigendecompose
+
+
+20/04/16
+========
+implement the acoustictensor decomposition
+solve using godunov's method
+get 1D ghost fluid working 
+try and get working in 2D
+
+
 08/04/16
 ========
 output simply. Get rid of the multiple outputs and index stuff in gnuplot script. Can we pipe stdout to gnuplot?
