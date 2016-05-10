@@ -1,3 +1,5 @@
+test
+
 08/04/16
 ========
 output simply. Get rid of the multiple outputs and index stuff in gnuplot script. Can we pipe stdout to gnuplot?
