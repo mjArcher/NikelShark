@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 10/05/16
 ========
 get code generation working this week. 
@@ -22,6 +23,9 @@ solve using godunov's method
 get 1D ghost fluid working 
 try and get working in 2D
 
+=======
+test
+>>>>>>> c14469fa20e021d65a46422e90a8bff3e0d945b6
 
 08/04/16
 ========
