@@ -1,4 +1,3 @@
-/* -I ~/Libraries/ */
 //Matt Archer
 //compile as follows: g++ LibraryTest.cpp -I ~/Libraries/ -o test
 

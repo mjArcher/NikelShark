@@ -9,7 +9,7 @@
 
 #include "ElasticState.h"
 #include "ElasticPrimState.h"
-#include "ElasticEOS.h"
+#include "ElasticEOS/ElasticEOS.h"
 #include "Utils.h"
 #include "SquareTensor3.h"
 
