@@ -23,15 +23,41 @@ using namespace Eigen;
 #define strain_comps(G) double G11 = G(0,0), G12 = G(0,1), G13 = G(0,2), G22 = G(1,1), G23 = G(1,2), G33 = G(2,2)
 /* #define eos_comps(eos) double B0 = eos.B0 */
 
+
+//construct A 
+//
+
+vector<eigen> construct_Eigenvectors_A(System sys, ElasticPrimState pL, ElasticPrimState pR, ElasticEOS eos)
+{
+  //Aij_km    
+  //We have:
+  //dsigma_dEpsilon_dI
+  //dsigma_drho
+  //drho_dF
+  //dG_dF
+  //depsilonIp_dFjm
+  //
+  //codegen gives the following:
+  //dsigma_dG
+  //
+  //dsigma_dS (plasticity?)
+  //S
+  //sigma
+  //epsilon
+}
+
+
 double energy(Matrix3d G, ElasticEOS eos)
 {
   double result;
   strain_comps(G);
   cout << G11 << " " << G(0,0) << endl;
+  //these should be publicly accessible anyway from within the EOS class
   double B0, beta, K0, alpha, T0, cv, S, gamma;
   #include "./codegen/romenskii_energy.inc"
   /* eos_comps(eos) */
   cout << B0 << endl;
+  printf("Energy is: %d\n", result);
 
   return result;
 }

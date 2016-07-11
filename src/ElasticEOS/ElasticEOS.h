@@ -11,57 +11,41 @@
 // this is the Romenski equation of state
 //
 
-class ElasticEOS {
-
+class ElasticEOS 
+{
 	public:
 
-		ElasticEOS(const std::string&);
-		
+    //default 
+		ElasticEOS() {}
+
 		//! Default constuctor. Careful!
-		ElasticEOS();
+		virtual ~ElasticEOS() {}
 
-		double entropy(const Eigen::Vector3d invariants, double internalEnergy) const;	
+		virtual double entropy(const Eigen::Vector3d invariants, double internalEnergy) const=0;	
 
-		double internalEnergy(const Eigen::Vector3d invariants, double Entropy) const; //invariants, 
+		virtual double internalEnergy(const Eigen::Vector3d invariants, double Entropy) const=0; //invariants, 
 
-		void checkEosConstants() const;
+		virtual void checkEosConstants() const=0;
 
-		double soundSpeed() const;
+		virtual double soundSpeed() const=0;
 
-		Eigen::Vector3d depsi_dI(const Eigen::Vector3d I, double S) const;
+		virtual Eigen::Vector3d depsi_dI(const Eigen::Vector3d I, double S) const=0;
 
-		Eigen::Matrix3d depsi_dI_dI(const Eigen::Vector3d& I, double S) const;
+		virtual Eigen::Matrix3d depsi_dI_dI(const Eigen::Vector3d& I, double S) const=0;
 
-    Eigen::Vector3d depsi_dI_dS(const Eigen::Vector3d& I, double S) const;
+    virtual Eigen::Vector3d depsi_dI_dS(const Eigen::Vector3d& I, double S) const=0;
 
-		~ElasticEOS();
+    //! Reference density
+    virtual double rho0_() const
+    {
+      return rho0;
+    }
 
-		double rho0; //this is public because it is required by  the density function in the system class 
-	private:
-		
-		//! Equation of state parameters 	
+    //additional derivatives for plasticity implementation.
 
-		//! Density
+  protected:
 
-		//! Heat capacity at constant volume
-		double cv;
-
-		//! Temperature
-		double T0;
-
-		//! squared bulk shear wave
-		double B0;	
-
-		//! squared bulk speed of sound
-		double K0;
-
-		//! Constants characterising the non-linear dependence of sound speeds and
-		//! temperature on the mass density
-		double alpha;
-
-		double beta;
-
-		double gamma;
+    double rho0;
 
 };
 #endif

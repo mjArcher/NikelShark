@@ -4,7 +4,7 @@
 using namespace Eigen;
 using namespace std; 
 
-System::System(const ElasticEOS eos):Eos(eos){}
+System::System(const ElasticEOS* eos):Eos(eos){}
 
 System::~System(){}
 
@@ -23,7 +23,7 @@ ElasticPrimState System::conservativeToPrimitive(const ElasticState& consState) 
 	//! calculate internl energy from consState
 	double ie =	E - u.dot(u)/2.; 	
 	/* cout << "Cons INTERNAL ENERGY " << ie << endl; */
-	double S = Eos.entropy(inv, ie);
+	double S = Eos->entropy(inv, ie);
 	ElasticPrimState primState(u, F, S);
 	return primState;
 }
@@ -34,7 +34,7 @@ ElasticState System::primitiveToConservative(const ElasticPrimState& primState) 
 	const Matrix3d F = primState.F_();
 	const Vector3d invariants = getInvariants(F);
 	/* cout << "Primitive invariants " << invariants << " G " << G << endl; */
-	const double ie =	Eos.internalEnergy(invariants, primState.S_());
+	const double ie =	Eos->internalEnergy(invariants, primState.S_());
 	Vector3d u = primState.u_();
 	double E = ie + u.dot(u)/2.;
 	/* cout << " Prim INTERNAL ENERGY " << ie << endl; */
@@ -45,21 +45,21 @@ ElasticState System::primitiveToConservative(const ElasticPrimState& primState) 
 
 double System::Density(const Eigen::Matrix3d& F) const 
 {
-	double rho = Eos.rho0/(F.determinant());	
+	double rho = Eos->rho0_()/(F.determinant());	
 	return rho;
 }
 
 double System::Density(const ElasticPrimState& primState) const 
 {
 	Matrix3d F = primState.F_();
-	double rho = Eos.rho0/(F.determinant());	
+	double rho = Eos->rho0_()/(F.determinant());	
 	return rho;
 }
 
 double System::Density(const ElasticState& consState) const
 {
 	Matrix3d rhoF = consState.rhoF();	
-	double rho = sqrt(rhoF.determinant()/Eos.rho0);	
+	double rho = sqrt(rhoF.determinant()/Eos->rho0_());	
 	return rho;
 }
 
@@ -144,7 +144,7 @@ Matrix3d System::stress(const ElasticPrimState& primState) const
 	
 	/* double S = Eos.entropy(inv, EosVgc */
 	double S = primState.S_();
-	Vector3d Id = Eos.depsi_dI(I, S);
+	Vector3d Id = Eos->depsi_dI(I, S);
 	Matrix3d G = strainTensor(F);
 	Matrix3d GI = G.inverse();
 	double sigma_t;
@@ -262,12 +262,12 @@ SquareTensor3 System::dstress_dF(const ElasticPrimState& primState, const Matrix
 {
 	const double rho = Density(primState);
 	const Matrix3d F = primState.F_();	
-	const double ie =	Eos.internalEnergy(I, primState.S_());
+	const double ie =	Eos->internalEnergy(I, primState.S_());
 	const Matrix3d dstress_drho = stress(primState)/rho;
 	const Matrix3d drho_dF = - rho * (F.inverse()).transpose();
 	const Matrix3d m2rho = -2. * rho * G;
-	const vector<Eigen::Matrix3d> depsdF = dep_dF(primState.dI_dF(G,I), Eos.depsi_dI_dI(I, primState.S_()));
-	const Vector3d de_dI = Eos.depsi_dI(I, primState.S_());
+	const vector<Eigen::Matrix3d> depsdF = dep_dF(primState.dI_dF(G,I), Eos->depsi_dI_dI(I, primState.S_()));
+	const Vector3d de_dI = Eos->depsi_dI(I, primState.S_());
 	const SquareTensor3 dsdeps = m2rho * primState.dI_dG(G,I); //cannot remember this derivation?
 	double sigma_rho;
 
@@ -314,7 +314,7 @@ Vector3d System::B(const ElasticPrimState& pW) const
 	const Vector3d Inv = getInvariants(F);
   const SquareTensor3 dsdeps = m2rho * pW.dI_dG(G,Inv); //cannot remember this derivation?
   Matrix3d dsdeps_ = dsdeps[2];
-  Matrix3d dsdS = Eos.depsi_dI_dS(Inv, pW.S_())[2] * dsdeps_; //only non-zero component
+  Matrix3d dsdS = Eos->depsi_dI_dS(Inv, pW.S_())[2] * dsdeps_; //only non-zero component
   Vector3d B;
   for(int i = 0; i < 3; i++) {
     B[i] = dsdS(0, i); 

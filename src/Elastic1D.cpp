@@ -9,6 +9,8 @@
 #include "ElasticState.h"
 #include "ElasticPrimState.h"
 #include "SolidSystem.h"
+#include "ElasticEOS/ElasticEOS.h"
+#include "ElasticEOS/Romenskii.h"
 #include "InputSolid.h"
 
 using namespace std;
@@ -50,7 +52,7 @@ struct Material {
   const Domain dom;
   string name;
 
-  Material(const string& a_name, const Domain& a_dom, const ElasticEOS Eos) :
+  Material(const string& a_name, const Domain& a_dom, const ElasticEOS* Eos) :
     sys(Eos), 
     sol(a_dom.GNi), dom(a_dom), name(a_name) {}
 };
@@ -1028,7 +1030,7 @@ int main(int argc, char ** argv)
 
   //create and initialize domain
 	Domain dom = Domain(inputSolid.cellCountX, 3, inputSolid.xMax);  //changed to 3 ghost cells for PPM
-  ElasticEOS Eos(inputSolid.matL);
+  Romenskii* Eos = new Romenskii(inputSolid.matL);
   Material* mat = new Material(inputSolid.matL, dom, Eos);
 
   //create left and right states and initialise
@@ -1051,6 +1053,7 @@ int main(int argc, char ** argv)
   double elapsed_secs = double(end - begin);
   std::cout << "TIME " << elapsed_secs << std::endl;
   delete mat;
+  delete Eos;
   return 0;
 }
 

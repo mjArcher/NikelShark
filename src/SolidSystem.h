@@ -58,10 +58,10 @@ class System {
 // derivatives of invariants with respec to the components of the strain tensor -- here or EOS
 
 	public:
-		System(const ElasticEOS Eos);
+		System(const ElasticEOS* Eos);
 		~System();
 
-		ElasticEOS Eos;
+		const ElasticEOS* const Eos;
 
 		//! Convert to primitive state
 		ElasticPrimState conservativeToPrimitive(const ElasticState& consState) const;
